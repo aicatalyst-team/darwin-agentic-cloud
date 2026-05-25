@@ -19,6 +19,7 @@ from dac.cost import (
     max_possible_cost,
     rate_for_substrate,
 )
+from dac.storage import AttestationStore
 from dac.types import ExecutionResult, WorkloadSpec
 
 if TYPE_CHECKING:
@@ -103,6 +104,7 @@ def test_runtime_rejects_budget_with_signed_attestation(tmp_path: "Path") -> Non
     runtime = Runtime(
         sandbox=ShouldNotBeCalledSandbox(),  # type: ignore[arg-type]
         signer=Signer(key_path=tmp_path / "key.pem"),
+        store=AttestationStore(db_path=tmp_path / "att.db"),
     )
 
     spec = WorkloadSpec(
