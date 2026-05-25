@@ -2,17 +2,23 @@
 
 The single entry point that turns a WorkloadSpec into a SignedAttestation:
 
-    spec → sandbox.execute → ExecutionResult → build_signed_attestation → SignedAttestation
+    spec → budget check → sandbox.execute → ExecutionResult → signed attestation
 
-This is what the HTTP server, the CLI, and the MCP tools all call.
+Pre-flight budget enforcement: workloads whose maximum possible cost
+exceeds their cap are rejected before any sandbox is launched. The
+rejection is still attested — the agent gets a signed proof that the
+workload was rejected and why, with cost_usd=0 and substrate_id intact.
 """
 
 from __future__ import annotations
 
+import time
 import uuid
 
 from dac.attestation import build_signed_attestation
-from dac.sandbox import DockerSandbox, SandboxResult
+from dac.cost import BudgetExceeded, check_budget, cost_for_seconds
+from dac.hashing import sha256_hex
+from dac.sandbox import SUBSTRATE_ID, DockerSandbox, SandboxResult
 from dac.signing import Signer
 from dac.types import ExecutionResult, SignedAttestation, WorkloadSpec
 
@@ -36,12 +42,36 @@ class Runtime:
         """Execute a workload spec and return a signed attestation."""
         workload_id = f"wl-{uuid.uuid4().hex[:12]}"
 
+        # Pre-flight budget check (cheap, runs before any sandbox launch)
+        try:
+            check_budget(spec, SUBSTRATE_ID)
+        except BudgetExceeded as e:
+            now = time.time()
+            execution_result = ExecutionResult(
+                workload_id=workload_id,
+                status="cost_exceeded",
+                stdout="",
+                stderr="",
+                exit_code=None,
+                started_at=now,
+                ended_at=now,
+                wall_time_sec=0.0,
+                cost_usd=0.0,
+                substrate_id=SUBSTRATE_ID,
+                output_hash=sha256_hex(b""),
+                error=str(e),
+            )
+            return build_signed_attestation(spec, execution_result, self._signer)
+
+        # Execute in the sandbox
         sandbox_result: SandboxResult = self._sandbox.execute(
             code=spec.code,
             language=spec.language,
             timeout_sec=spec.timeout_sec,
             memory_mb=spec.memory_mb,
         )
+
+        cost_usd = cost_for_seconds(sandbox_result.wall_time_sec, sandbox_result.substrate_id)
 
         execution_result = ExecutionResult(
             workload_id=workload_id,
@@ -52,24 +82,10 @@ class Runtime:
             started_at=sandbox_result.started_at,
             ended_at=sandbox_result.ended_at,
             wall_time_sec=sandbox_result.wall_time_sec,
-            cost_usd=self._compute_cost(sandbox_result),
+            cost_usd=cost_usd,
             substrate_id=sandbox_result.substrate_id,
             output_hash=sandbox_result.output_hash,
             error=sandbox_result.error,
         )
 
         return build_signed_attestation(spec, execution_result, self._signer)
-
-    @staticmethod
-    def _compute_cost(result: SandboxResult) -> float:
-        """Simple wall-time cost model for v0.
-
-        Local Docker is essentially free, but we charge a notional rate
-        so the cost field is non-zero and meaningful for downstream
-        budgeting. Production substrates will have real rate cards.
-
-        Rate: $0.0001 per wall-time-second (six orders of magnitude cheaper
-        than AWS Lambda; this is a placeholder).
-        """
-        rate_per_sec = 0.0001
-        return round(result.wall_time_sec * rate_per_sec, 8)
