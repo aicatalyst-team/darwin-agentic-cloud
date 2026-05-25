@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from dataclasses import asdict
 from typing import Any
 
 from mcp.server import Server
@@ -52,15 +51,18 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "code": {"type": "string", "description": "Python source code."},
-                    "timeout_sec": {
-                        "type": "integer", "minimum": 1, "maximum": 600, "default": 30
-                    },
+                    "timeout_sec": {"type": "integer", "minimum": 1, "maximum": 600, "default": 30},
                     "memory_mb": {
-                        "type": "integer", "minimum": 64, "maximum": 8192, "default": 512
+                        "type": "integer",
+                        "minimum": 64,
+                        "maximum": 8192,
+                        "default": 512,
                     },
                     "cost_cap_usd": {
-                        "type": "number", "minimum": 0.0001, "default": 0.01,
-                        "description": "Maximum cost the workload may incur. Pre-flight enforced."
+                        "type": "number",
+                        "minimum": 0.0001,
+                        "default": 0.01,
+                        "description": "Maximum cost the workload may incur. Pre-flight enforced.",
                     },
                 },
                 "required": ["code"],
@@ -77,7 +79,12 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "code": {"type": "string", "description": "JS/Node source code."},
                     "timeout_sec": {"type": "integer", "minimum": 1, "maximum": 600, "default": 30},
-                    "memory_mb": {"type": "integer", "minimum": 64, "maximum": 8192, "default": 512},
+                    "memory_mb": {
+                        "type": "integer",
+                        "minimum": 64,
+                        "maximum": 8192,
+                        "default": 512,
+                    },
                     "cost_cap_usd": {"type": "number", "minimum": 0.0001, "default": 0.01},
                 },
                 "required": ["code"],
@@ -94,7 +101,10 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "attestation": {"type": "object", "description": "Attestation payload."},
                     "signature_b64": {"type": "string", "description": "Base64 Ed25519 signature."},
-                    "public_key_b64": {"type": "string", "description": "Base64 Ed25519 public key."},
+                    "public_key_b64": {
+                        "type": "string",
+                        "description": "Base64 Ed25519 public key.",
+                    },
                 },
                 "required": ["attestation", "signature_b64", "public_key_b64"],
             },
@@ -115,9 +125,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "limit": {
-                        "type": "integer", "minimum": 1, "maximum": 200, "default": 20
-                    },
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 200, "default": 20},
                     "status": {
                         "type": "string",
                         "description": "Filter by status (ok, error, timeout, oom, cost_exceeded).",
@@ -205,8 +213,12 @@ def _handle_verify(arguments: dict[str, Any]) -> list[TextContent]:
             "signer_key_id": arguments["attestation"].get("signer_key_id"),
         }
         return [TextContent(type="text", text=json.dumps(result, indent=2))]
-    except Exception as e:  # noqa: BLE001
-        return [TextContent(type="text", text=json.dumps({"verified": False, "error": str(e)}, indent=2))]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text", text=json.dumps({"verified": False, "error": str(e)}, indent=2)
+            )
+        ]
 
 
 def _handle_identity() -> list[TextContent]:
@@ -240,7 +252,12 @@ def _handle_history_recent(arguments: dict[str, Any]) -> list[TextContent]:
         }
         for r in rows
     ]
-    return [TextContent(type="text", text=json.dumps({"count": len(summaries), "attestations": summaries}, indent=2))]
+    return [
+        TextContent(
+            type="text",
+            text=json.dumps({"count": len(summaries), "attestations": summaries}, indent=2),
+        )
+    ]
 
 
 def _handle_history_stats() -> list[TextContent]:
@@ -264,7 +281,12 @@ def _handle_history_get(arguments: dict[str, Any]) -> list[TextContent]:
     attestation_id = arguments["attestation_id"]
     fetched = store.get(attestation_id)
     if fetched is None:
-        return [TextContent(type="text", text=json.dumps({"error": "not_found", "attestation_id": attestation_id}, indent=2))]
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": "not_found", "attestation_id": attestation_id}, indent=2),
+            )
+        ]
     return [TextContent(type="text", text=json.dumps(fetched.signed_attestation, indent=2))]
 
 

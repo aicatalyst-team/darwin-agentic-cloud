@@ -144,7 +144,7 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
                 "public_key_b64": req.public_key_b64,
             }
             return VerifyResponse(verified=verify_attestation(payload))
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise HTTPException(status_code=400, detail=str(e)) from e
 
     @app.get(
@@ -178,9 +178,7 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         status: str | None = Query(None),
     ) -> AttestationListResponse:
         rows = (
-            store.list_by_status(status, limit=limit)
-            if status
-            else store.list_recent(limit=limit)
+            store.list_by_status(status, limit=limit) if status else store.list_recent(limit=limit)
         )
         return AttestationListResponse(
             attestations=[

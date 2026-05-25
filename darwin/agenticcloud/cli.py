@@ -14,6 +14,7 @@ Examples:
 from __future__ import annotations
 
 import json
+from datetime import UTC
 from pathlib import Path
 from typing import Annotated
 
@@ -53,12 +54,18 @@ err_console = Console(stderr=True)
 @app.command()
 def run(
     file: Annotated[Path, typer.Argument(help="Path to the script to run.")],
-    language: Annotated[str, typer.Option("--language", "-l", help="Language (python or node).")] = "python",
+    language: Annotated[
+        str, typer.Option("--language", "-l", help="Language (python or node).")
+    ] = "python",
     timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds.")] = 30,
     memory: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB.")] = 512,
     cost_cap: Annotated[float, typer.Option("--cost-cap", help="Cost ceiling in USD.")] = 0.01,
-    save: Annotated[Path | None, typer.Option("--save", help="Write the signed attestation to this path.")] = None,
-    json_only: Annotated[bool, typer.Option("--json", help="Print only the signed attestation JSON.")] = False,
+    save: Annotated[
+        Path | None, typer.Option("--save", help="Write the signed attestation to this path.")
+    ] = None,
+    json_only: Annotated[
+        bool, typer.Option("--json", help="Print only the signed attestation JSON.")
+    ] = False,
 ) -> None:
     """Execute a script in the darwin.agenticcloud sandbox and emit a signed attestation."""
     if not file.exists():
@@ -98,7 +105,13 @@ def _print_execution(signed_dict: dict, saved_to: Path | None) -> None:
     er = a["execution_result"]
 
     status = er["status"]
-    color = {"ok": "green", "error": "red", "timeout": "yellow", "oom": "yellow", "cost_exceeded": "red"}.get(status, "white")
+    color = {
+        "ok": "green",
+        "error": "red",
+        "timeout": "yellow",
+        "oom": "yellow",
+        "cost_exceeded": "red",
+    }.get(status, "white")
 
     table = Table(show_header=False, box=None, padding=(0, 2))
     table.add_column(style="bold")
@@ -128,18 +141,23 @@ def _print_execution(signed_dict: dict, saved_to: Path | None) -> None:
 def serve(
     host: Annotated[str, typer.Option("--host", help="Bind address.")] = "127.0.0.1",
     port: Annotated[int, typer.Option("--port", "-p", help="Bind port.")] = 8787,
-    reload: Annotated[bool, typer.Option("--reload", help="Reload on file changes (dev only).")] = False,
+    reload: Annotated[
+        bool, typer.Option("--reload", help="Reload on file changes (dev only).")
+    ] = False,
 ) -> None:
     """Run the darwin.agenticcloud HTTP server."""
     import uvicorn
 
-    uvicorn.run("darwin.agenticcloud.server:app", host=host, port=port, reload=reload, log_level="info")
+    uvicorn.run(
+        "darwin.agenticcloud.server:app", host=host, port=port, reload=reload, log_level="info"
+    )
 
 
 @app.command()
 def version() -> None:
     """Print the Darwin version."""
     import darwin
+
     print(darwin.__version__)
 
 
@@ -237,11 +255,13 @@ def history_list(
     table.add_column("substrate")
     table.add_column("id (short)", style="dim")
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     for r in rows:
-        color = {"ok": "green", "error": "red", "timeout": "yellow", "cost_exceeded": "red"}.get(r.status, "white")
-        ts = datetime.fromtimestamp(r.issued_at, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        color = {"ok": "green", "error": "red", "timeout": "yellow", "cost_exceeded": "red"}.get(
+            r.status, "white"
+        )
+        ts = datetime.fromtimestamp(r.issued_at, tz=UTC).strftime("%Y-%m-%d %H:%M:%S")
         table.add_row(
             ts,
             f"[{color}]{r.status}[/{color}]",
@@ -279,7 +299,9 @@ def history_stats() -> None:
     table.add_row("status: timeout", str(timeout_count))
     table.add_row("status: cost_exceeded", str(rejected_count))
 
-    console.print(Panel(table, title="darwin.agenticcloud attestation history", border_style="cyan"))
+    console.print(
+        Panel(table, title="darwin.agenticcloud attestation history", border_style="cyan")
+    )
 
 
 @history_app.command("show")
@@ -293,14 +315,15 @@ def history_show(
 
     if len(attestation_id) < 36:
         candidates = [
-            a for a in store.list_recent(limit=10**9)
-            if a.attestation_id.startswith(attestation_id)
+            a for a in store.list_recent(limit=10**9) if a.attestation_id.startswith(attestation_id)
         ]
         if not candidates:
             err_console.print(f"[red]No attestation matching prefix:[/red] {attestation_id}")
             raise typer.Exit(code=2)
         if len(candidates) > 1:
-            err_console.print(f"[red]Ambiguous prefix:[/red] {attestation_id} matches {len(candidates)} attestations")
+            err_console.print(
+                f"[red]Ambiguous prefix:[/red] {attestation_id} matches {len(candidates)} attestations"
+            )
             raise typer.Exit(code=2)
         attestation_id = candidates[0].attestation_id
 
@@ -334,9 +357,15 @@ if __name__ == "__main__":
 
 @mcp_app.command("install")
 def mcp_install(
-    client: Annotated[str, typer.Option("--client", help="MCP client: 'claude-desktop' or 'cursor'.")] = "claude-desktop",
-    name: Annotated[str, typer.Option("--name", help="Server entry name in the config.")] = "darwin",
-    force: Annotated[bool, typer.Option("--force", help="Overwrite an existing entry without prompting.")] = False,
+    client: Annotated[
+        str, typer.Option("--client", help="MCP client: 'claude-desktop' or 'cursor'.")
+    ] = "claude-desktop",
+    name: Annotated[
+        str, typer.Option("--name", help="Server entry name in the config.")
+    ] = "darwin",
+    force: Annotated[
+        bool, typer.Option("--force", help="Overwrite an existing entry without prompting.")
+    ] = False,
 ) -> None:
     """Install darwin.agenticcloud as an MCP server in a supported client.
 
@@ -354,7 +383,9 @@ def mcp_install(
 
     if client == "claude-desktop":
         if system == "Darwin":
-            config_path = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            config_path = (
+                home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            )
         elif system == "Windows":
             appdata = os.environ.get("APPDATA")
             if not appdata:
@@ -387,7 +418,10 @@ def mcp_install(
 
     if name in config["mcpServers"] and not force:
         existing = config["mcpServers"][name]
-        if existing.get("command") == sys.executable and existing.get("args") == ["-m", "darwin.agenticcloud.mcp_server"]:
+        if existing.get("command") == sys.executable and existing.get("args") == [
+            "-m",
+            "darwin.agenticcloud.mcp_server",
+        ]:
             console.print(f"[green]✓ {name} already installed in {client} (no changes).[/green]")
             console.print(f"  config: {config_path}")
             console.print(f"  python: {sys.executable}")
@@ -405,17 +439,21 @@ def mcp_install(
 
     config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
-    console.print(f"[green]✓ Installed darwin.agenticcloud as MCP server '{name}' in {client}.[/green]")
+    console.print(
+        f"[green]✓ Installed darwin.agenticcloud as MCP server '{name}' in {client}.[/green]"
+    )
     console.print(f"  config:  {config_path}")
     console.print(f"  command: {sys.executable}")
-    console.print(f"  args:    -m darwin.agenticcloud.mcp_server")
+    console.print("  args:    -m darwin.agenticcloud.mcp_server")
     console.print()
     console.print("[dim]Restart your MCP client to pick up the change.[/dim]")
 
 
 @mcp_app.command("uninstall")
 def mcp_uninstall(
-    client: Annotated[str, typer.Option("--client", help="MCP client: 'claude-desktop' or 'cursor'.")] = "claude-desktop",
+    client: Annotated[
+        str, typer.Option("--client", help="MCP client: 'claude-desktop' or 'cursor'.")
+    ] = "claude-desktop",
     name: Annotated[str, typer.Option("--name", help="Server entry name to remove.")] = "darwin",
 ) -> None:
     """Remove an MCP server entry from the client config."""
@@ -428,7 +466,9 @@ def mcp_uninstall(
 
     if client == "claude-desktop":
         if system == "Darwin":
-            config_path = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            config_path = (
+                home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            )
         elif system == "Windows":
             appdata = os.environ.get("APPDATA")
             if not appdata:

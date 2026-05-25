@@ -21,10 +21,10 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
 
 from darwin.agenticcloud.types import SignedAttestation
 
@@ -195,9 +195,7 @@ class AttestationStore:
         """Sum of cost_usd across all (or one signer's) attestations."""
         with self._connect() as conn:
             if signer_key_id is None:
-                row = conn.execute(
-                    "SELECT COALESCE(SUM(cost_usd), 0) FROM attestations"
-                ).fetchone()
+                row = conn.execute("SELECT COALESCE(SUM(cost_usd), 0) FROM attestations").fetchone()
             else:
                 row = conn.execute(
                     "SELECT COALESCE(SUM(cost_usd), 0) FROM attestations WHERE signer_key_id = ?",

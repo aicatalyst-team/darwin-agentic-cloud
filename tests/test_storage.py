@@ -37,19 +37,19 @@ def _make_signed(signer: Signer, *, status: str = "ok", cost: float = 0.001):
 
 
 @pytest.fixture
-def signer(tmp_path: "Path") -> Signer:
+def signer(tmp_path: Path) -> Signer:
     return Signer(key_path=tmp_path / "signing.pem")
 
 
 @pytest.fixture
-def store(tmp_path: "Path") -> AttestationStore:
+def store(tmp_path: Path) -> AttestationStore:
     return AttestationStore(db_path=tmp_path / "att.db")
 
 
 # -------------------------------------------------------------------
 # Schema and basic round-trip
 # -------------------------------------------------------------------
-def test_store_creates_db_file(tmp_path: "Path") -> None:
+def test_store_creates_db_file(tmp_path: Path) -> None:
     db_path = tmp_path / "subdir" / "att.db"
     store = AttestationStore(db_path=db_path)
     assert db_path.exists()
@@ -119,7 +119,7 @@ def test_list_by_status(store: AttestationStore, signer: Signer) -> None:
     assert len(ok) == 2
 
 
-def test_list_by_signer(store: AttestationStore, signer: Signer, tmp_path: "Path") -> None:
+def test_list_by_signer(store: AttestationStore, signer: Signer, tmp_path: Path) -> None:
     other_signer = Signer(key_path=tmp_path / "other.pem")
     store.save(_make_signed(signer))
     store.save(_make_signed(signer))
@@ -140,9 +140,7 @@ def test_total_cost(store: AttestationStore, signer: Signer) -> None:
     assert store.total_cost_usd() == pytest.approx(0.006)
 
 
-def test_total_cost_by_signer(
-    store: AttestationStore, signer: Signer, tmp_path: "Path"
-) -> None:
+def test_total_cost_by_signer(store: AttestationStore, signer: Signer, tmp_path: Path) -> None:
     other = Signer(key_path=tmp_path / "other.pem")
     store.save(_make_signed(signer, cost=0.001))
     store.save(_make_signed(signer, cost=0.002))
@@ -155,7 +153,7 @@ def test_total_cost_by_signer(
 # -------------------------------------------------------------------
 # Runtime integration
 # -------------------------------------------------------------------
-def test_runtime_persists_every_attestation(tmp_path: "Path") -> None:
+def test_runtime_persists_every_attestation(tmp_path: Path) -> None:
     """Runtime.run() writes the attestation to the store before returning."""
     from darwin.agenticcloud.runtime import Runtime
 
@@ -189,7 +187,7 @@ def test_runtime_persists_every_attestation(tmp_path: "Path") -> None:
     assert fetched.status == "ok"
 
 
-def test_runtime_persists_rejected_attestations(tmp_path: "Path") -> None:
+def test_runtime_persists_rejected_attestations(tmp_path: Path) -> None:
     """Even budget-rejected workloads are persisted."""
     from darwin.agenticcloud.runtime import Runtime
 

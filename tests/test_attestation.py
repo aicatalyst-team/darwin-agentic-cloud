@@ -62,7 +62,9 @@ def result() -> ExecutionResult:
 # -------------------------------------------------------------------
 # Happy path
 # -------------------------------------------------------------------
-def test_signed_attestation_verifies(signer: Signer, spec: WorkloadSpec, result: ExecutionResult) -> None:
+def test_signed_attestation_verifies(
+    signer: Signer, spec: WorkloadSpec, result: ExecutionResult
+) -> None:
     """A freshly signed attestation verifies."""
     signed = build_signed_attestation(spec, result, signer)
     assert verify_attestation(signed) is True

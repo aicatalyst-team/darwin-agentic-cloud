@@ -20,7 +20,7 @@ from darwin.agenticcloud.cost import (
     rate_for_substrate,
 )
 from darwin.agenticcloud.storage import AttestationStore
-from darwin.agenticcloud.types import ExecutionResult, WorkloadSpec
+from darwin.agenticcloud.types import WorkloadSpec
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -89,7 +89,7 @@ def test_budget_rejects_zero_or_negative_cap() -> None:
 # -------------------------------------------------------------------
 # Runtime integration — the agent-facing guarantee
 # -------------------------------------------------------------------
-def test_runtime_rejects_budget_with_signed_attestation(tmp_path: "Path") -> None:
+def test_runtime_rejects_budget_with_signed_attestation(tmp_path: Path) -> None:
     """A budget-exceeded workload returns a signed attestation with
     status='cost_exceeded' and never launches the sandbox."""
     from darwin.agenticcloud.runtime import Runtime
