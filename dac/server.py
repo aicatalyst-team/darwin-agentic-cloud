@@ -1,13 +1,16 @@
 """DAC HTTP server (FastAPI).
 
 Exposes the runtime over HTTP so any client — curl, a remote agent,
-another service — can request signed execution.
+another service — can request signed execution and query history.
 
 Endpoints:
-    GET  /healthz                      — liveness
-    GET  /v0/identity                  — server's public key + substrate id
-    POST /v0/run                       — execute workload, return signed attestation
-    POST /v0/attestations/verify       — verify a signed attestation
+    GET  /healthz                          — liveness
+    GET  /v0/identity                      — server's public key + substrate id
+    POST /v0/run                           — execute workload, return signed attestation
+    POST /v0/attestations/verify           — verify a signed attestation
+    GET  /v0/attestations                  — list recent attestations
+    GET  /v0/attestations/{id}             — fetch a specific attestation
+    GET  /v0/attestations/stats            — aggregate stats
 """
 
 from __future__ import annotations
@@ -15,7 +18,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 import dac
@@ -23,18 +26,19 @@ from dac.attestation import verify_attestation
 from dac.runtime import Runtime
 from dac.sandbox import SUBSTRATE_ID
 from dac.signing import Signer
+from dac.storage import AttestationStore
 from dac.types import WorkloadSpec
 
 
 # -------------------------------------------------------------------
-# Request / response schemas
+# Schemas
 # -------------------------------------------------------------------
 class RunRequest(BaseModel):
     code: str = Field(..., description="Source code to execute.")
     language: str = Field("python", description="Language: 'python' or 'node'.")
-    inputs: dict = Field(default_factory=dict, description="Optional inputs passed to the workload.")
+    inputs: dict = Field(default_factory=dict, description="Optional inputs.")
     cost_cap_usd: float = Field(0.01, ge=0, description="Cost ceiling in USD.")
-    timeout_sec: int = Field(30, ge=1, le=600, description="Wall-time timeout in seconds.")
+    timeout_sec: int = Field(30, ge=1, le=600, description="Timeout in seconds.")
     memory_mb: int = Field(512, ge=64, le=8192, description="Memory limit in MB.")
 
 
@@ -62,15 +66,39 @@ class IdentityResponse(BaseModel):
     version: str
 
 
+class AttestationSummary(BaseModel):
+    attestation_id: str
+    workload_id: str
+    signer_key_id: str
+    substrate_id: str
+    status: str
+    issued_at: float
+    cost_usd: float
+    wall_time_sec: float
+    schema_version: str
+
+
+class AttestationListResponse(BaseModel):
+    attestations: list[AttestationSummary]
+    count: int
+
+
+class AttestationStatsResponse(BaseModel):
+    total_count: int
+    total_cost_usd: float
+    by_status: dict[str, int]
+
+
 # -------------------------------------------------------------------
 # App factory
 # -------------------------------------------------------------------
 def create_app(runtime: Runtime | None = None) -> FastAPI:
     """Build a FastAPI app with the given runtime (or a default one)."""
     rt = runtime or Runtime()
+    store: AttestationStore = rt.store
 
     app = FastAPI(
-        title="Darwinic Agentic Cloud",
+        title="Darwin Agentic Cloud",
         description="Verifiable compute for AI agents with cryptographically signed attestations.",
         version=dac.__version__,
     )
@@ -100,7 +128,6 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
             timeout_sec=req.timeout_sec,
             memory_mb=req.memory_mb,
         )
-        # Sandbox is blocking; run it on a worker thread so the event loop stays free.
         signed = await asyncio.to_thread(rt.run, spec)
         return RunResponse(
             attestation=signed.attestation,
@@ -119,6 +146,66 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
             return VerifyResponse(verified=verify_attestation(payload))
         except Exception as e:  # noqa: BLE001
             raise HTTPException(status_code=400, detail=str(e)) from e
+
+    @app.get(
+        "/v0/attestations/stats",
+        response_model=AttestationStatsResponse,
+        tags=["attestations"],
+    )
+    async def stats() -> AttestationStatsResponse:
+        total = store.count()
+        total_cost = store.total_cost_usd()
+        by_status = {
+            "ok": len(store.list_by_status("ok", limit=10**9)),
+            "error": len(store.list_by_status("error", limit=10**9)),
+            "timeout": len(store.list_by_status("timeout", limit=10**9)),
+            "oom": len(store.list_by_status("oom", limit=10**9)),
+            "cost_exceeded": len(store.list_by_status("cost_exceeded", limit=10**9)),
+        }
+        return AttestationStatsResponse(
+            total_count=total,
+            total_cost_usd=total_cost,
+            by_status=by_status,
+        )
+
+    @app.get(
+        "/v0/attestations",
+        response_model=AttestationListResponse,
+        tags=["attestations"],
+    )
+    async def list_attestations(
+        limit: int = Query(20, ge=1, le=1000),
+        status: str | None = Query(None),
+    ) -> AttestationListResponse:
+        rows = (
+            store.list_by_status(status, limit=limit)
+            if status
+            else store.list_recent(limit=limit)
+        )
+        return AttestationListResponse(
+            attestations=[
+                AttestationSummary(
+                    attestation_id=r.attestation_id,
+                    workload_id=r.workload_id,
+                    signer_key_id=r.signer_key_id,
+                    substrate_id=r.substrate_id,
+                    status=r.status,
+                    issued_at=r.issued_at,
+                    cost_usd=r.cost_usd,
+                    wall_time_sec=r.wall_time_sec,
+                    schema_version=r.schema_version,
+                )
+                for r in rows
+            ],
+            count=len(rows),
+        )
+
+    @app.get("/v0/attestations/{attestation_id}", tags=["attestations"])
+    async def get_attestation(attestation_id: str) -> dict:
+        fetched = store.get(attestation_id)
+        if fetched is None:
+            raise HTTPException(status_code=404, detail="Attestation not found")
+        return fetched.signed_attestation
 
     return app
 
