@@ -70,13 +70,23 @@ class DockerSandbox:
     """Execute code in a Docker container with strict isolation."""
 
     def __init__(self, client: docker.DockerClient | None = None) -> None:
-        self._client = client or docker.from_env()
-        self._verify_daemon()
+        # Lazy: don't connect until execute() is first called. Lets the server
+        # start in environments without a local Docker daemon (e.g. hosted
+        # read-only demos). Calling execute() without a reachable daemon
+        # still raises a clear error, just later instead of at import time.
+        self._client_arg = client
+        self._client: docker.DockerClient | None = None
+
+    def _ensure_client(self) -> docker.DockerClient:
+        if self._client is None:
+            self._client = self._client_arg or docker.from_env()
+            self._verify_daemon()
+        return self._client
 
     def _verify_daemon(self) -> None:
         """Fail fast if Docker isn't reachable."""
         try:
-            self._client.ping()
+            self._ensure_client().ping()
         except Exception as e:
             raise RuntimeError("Docker daemon is not reachable. Is Docker Desktop running?") from e
 
@@ -105,7 +115,7 @@ class DockerSandbox:
 
         container: Container | None = None
         try:
-            container = self._client.containers.create(
+            container = self._ensure_client().containers.create(
                 image=image,
                 command=command,
                 name=container_name,
@@ -189,9 +199,9 @@ class DockerSandbox:
     def _ensure_image(self, image: str) -> None:
         """Pull the image if it's not present locally."""
         try:
-            self._client.images.get(image)
+            self._ensure_client().images.get(image)
         except ImageNotFound:
-            self._client.images.pull(image)
+            self._ensure_client().images.pull(image)
 
     @staticmethod
     def _copy_code_into_container(container: Container, filename: str, code: str) -> None:

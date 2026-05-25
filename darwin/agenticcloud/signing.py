@@ -18,7 +18,16 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 
 from darwin.agenticcloud.hashing import sha256_hex
 
-DEFAULT_KEY_DIR = Path.home() / ".darwin" / "agenticcloud" / "keys"
+def _default_key_dir() -> Path:
+    """Default keys directory, honoring DARWIN_STATE_DIR env var."""
+    import os
+    state_dir = os.environ.get("DARWIN_STATE_DIR")
+    if state_dir:
+        return Path(state_dir) / "keys"
+    return Path.home() / ".darwin" / "agenticcloud" / "keys"
+
+
+DEFAULT_KEY_DIR = _default_key_dir()
 DEFAULT_KEY_PATH = DEFAULT_KEY_DIR / "signing.pem"
 
 

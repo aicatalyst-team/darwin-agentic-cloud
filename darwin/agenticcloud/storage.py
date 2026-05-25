@@ -28,7 +28,16 @@ from pathlib import Path
 
 from darwin.agenticcloud.types import SignedAttestation
 
-DEFAULT_DB_PATH = Path.home() / ".darwin" / "agenticcloud" / "attestations.db"
+def _default_db_path() -> Path:
+    """Return the default attestation DB path, honoring DARWIN_STATE_DIR."""
+    import os
+    state_dir = os.environ.get("DARWIN_STATE_DIR")
+    if state_dir:
+        return Path(state_dir) / "attestations.db"
+    return Path.home() / ".darwin" / "agenticcloud" / "attestations.db"
+
+
+DEFAULT_DB_PATH = _default_db_path()
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS attestations (
