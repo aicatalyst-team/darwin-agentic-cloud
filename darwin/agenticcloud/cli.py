@@ -120,6 +120,7 @@ def run(
     result = att.get("execution_result", {})
 
     import darwin as _darwin
+
     panel = render_attestation_panel(
         workload_hash="sha256:" + att.get("workload_spec_hash", "?"),
         output_hash="sha256:" + result.get("output_hash", "?"),
@@ -187,9 +188,7 @@ def serve(
     reload: Annotated[
         bool, typer.Option("--reload", help="Reload on file changes (dev only).")
     ] = False,
-    quiet: Annotated[
-        bool, typer.Option("--quiet", help="Suppress branded boot banner.")
-    ] = False,
+    quiet: Annotated[bool, typer.Option("--quiet", help="Suppress branded boot banner.")] = False,
 ) -> None:
     """Run the darwin.agenticcloud HTTP server."""
     import uvicorn
