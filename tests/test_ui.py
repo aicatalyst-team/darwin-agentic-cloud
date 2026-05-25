@@ -100,7 +100,7 @@ class TestMatrixBoot:
 
     def test_matrix_boot_handles_empty_steps_list(self) -> None:
         # Defensive: zero-step boot shouldn't crash.
-        console, buf = capture()
+        console, _ = capture()
         with pytest.raises(ValueError):
             # Empty steps causes max() over empty seq — we want a clear error.
             ui.matrix_boot(console, [])
