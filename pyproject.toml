@@ -1,5 +1,5 @@
 [project]
-name = "darwin"
+name = "darwin-agentic-cloud"
 version = "0.1.0"
 description = "Darwin — adaptive software systems. Includes darwin.agenticcloud, the verifiable agentic cloud. Open-source compute for AI agents with cryptographically signed attestations."
 readme = "README.md"
@@ -81,7 +81,7 @@ docs = [
     "mkdocs>=1.6,<2",
     "mkdocs-material>=9.5,<10",
 ]
-all = ["dac[dev,test,docs]"]
+all = ["darwin-agentic-cloud[dev,test]"]
 
 [project.scripts]
 darwin = "darwin.agenticcloud.cli:app"
@@ -98,6 +98,25 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["darwin"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.venv*",
+    "/.git",
+    "/.github",
+    "/.idea",
+    "/.vscode",
+    "/dist",
+    "/build",
+    "/__pycache__",
+    "/.pytest_cache",
+    "/.ruff_cache",
+    "/.mypy_cache",
+    "/htmlcov",
+    "/.coverage",
+    "/coverage.xml",
+    "/*.broken*",
+]
 
 # -------------------------------------------------------------------
 # Ruff configuration
