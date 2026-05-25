@@ -28,9 +28,11 @@ from pathlib import Path
 
 from darwin.agenticcloud.types import SignedAttestation
 
+
 def _default_db_path() -> Path:
     """Return the default attestation DB path, honoring DARWIN_STATE_DIR."""
     import os
+
     state_dir = os.environ.get("DARWIN_STATE_DIR")
     if state_dir:
         return Path(state_dir) / "attestations.db"

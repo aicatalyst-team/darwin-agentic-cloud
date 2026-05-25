@@ -208,8 +208,9 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         return fetched.signed_attestation
 
     # Custom branded docs page (Material 3, dark, brand colors)
-    from fastapi.responses import HTMLResponse
     from pathlib import Path as _Path
+
+    from fastapi.responses import HTMLResponse
 
     _TEMPLATE_PATH = _Path(__file__).parent / "templates" / "docs.html"
 
