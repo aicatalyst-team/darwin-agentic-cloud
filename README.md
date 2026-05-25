@@ -3,14 +3,16 @@
 [![CI](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml/badge.svg)](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI](https://img.shields.io/pypi/v/darwin-agentic-cloud.svg)](https://pypi.org/project/darwin-agentic-cloud/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 > The verifiable agentic cloud. Open-source compute for AI agents with cryptographically signed attestations.
 
+**Install:** `pip install darwin-agentic-cloud`
+
 **Live demo:** https://darwin-agentic-cloud.fly.dev/docs
 
 Darwin Agentic Cloud (DAC) is a programmatic compute substrate designed for **AI agents to call directly**. Every execution returns a cryptographically signed attestation containing the workload hash, output hash, substrate identity, cost, and policy compliance proof. Agents that take action based on compute results can verify that what they asked for actually happened.
-
 
 ## Why DAC
 
@@ -49,13 +51,15 @@ DAC is the answer. One API. Verifiable execution. Bounded spend. Capability-base
 
 ## Quickstart
 
-### Prerequisites
+### Install from PyPI
 
-- Python 3.11+
-- Docker Desktop (running)
-- [`uv`](https://docs.astral.sh/uv/) for fast dependency management
+```bash
+pip install darwin-agentic-cloud
+```
 
-### Install
+### Or develop from source
+
+Prerequisites: Python 3.11+, Docker Desktop (running), [uv](https://docs.astral.sh/uv/) for dependency management.
 
 ```bash
 git clone https://github.com/vje013/darwin-agentic-cloud.git
@@ -67,31 +71,22 @@ uv sync --extra dev --extra test
 
 ```bash
 # Start the server
-make run
+darwin serve
 
 # In another terminal, run a workload
-dac run examples/example_workloads/hello.py
+darwin run examples/example_workloads/hello.py
 
 # Verify the attestation
-dac attest verify ./attestations/<id>.json
+darwin attest verify ./attestations/<id>.json
 ```
 
 ### Use from an AI agent via MCP
 
-Add DAC to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "dac": {
-      "command": "dac",
-      "args": ["mcp", "serve"]
-    }
-  }
-}
+```bash
+darwin mcp install
 ```
 
-Restart Claude Desktop. You can now ask Claude:
+That writes the Claude Desktop config for you. Restart Claude Desktop, then ask:
 
 > "Run a Python script that computes the first 100 prime numbers and verify the attestation."
 
@@ -109,7 +104,7 @@ See [docs/CONCEPTS.md](docs/CONCEPTS.md) for the full model.
 
 ## Documentation
 
-- [Quickstart](docs/QUICKSTART.md)
+- [Quickstart](QUICKSTART.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [MCP integration](docs/MCP.md)
 - [Python SDK](docs/SDK.md)
@@ -152,7 +147,7 @@ If you use DAC in academic work, please cite:
 ```bibtex
 @software{dac2026,
   author = {Edouard, Vladimir J.},
-  title = {Darwinic Agentic Cloud: Verifiable Compute for AI Agents},
+  title = {Darwin Agentic Cloud: Verifiable Compute for AI Agents},
   year = {2026},
   url = {https://github.com/vje013/darwin-agentic-cloud}
 }
@@ -160,19 +155,15 @@ If you use DAC in academic work, please cite:
 
 ## macOS Claude Desktop setup
 
-Claude Desktop's renderer process runs sandboxed under macOS Seatbelt
-and cannot read inside `~/Documents/`. If your project lives there,
-the venv must live outside it.
+Claude Desktop's renderer process runs sandboxed under macOS Seatbelt and cannot read inside `~/Documents/`. If your project lives there, the venv must live outside it.
 
 Recommended layout:
 
-    mkdir -p ~/.local/share/darwin-agentic-cloud
-    uv venv ~/.local/share/darwin-agentic-cloud/.venv --python 3.12
-    ln -s ~/.local/share/darwin-agentic-cloud/.venv .venv
-    uv pip install . --python ~/.local/share/darwin-agentic-cloud/.venv/bin/python
+```bash
+mkdir -p ~/.local/share/darwin-agentic-cloud
+uv venv ~/.local/share/darwin-agentic-cloud/.venv --python 3.12
+ln -s ~/.local/share/darwin-agentic-cloud/.venv .venv
+uv pip install . --python ~/.local/share/darwin-agentic-cloud/.venv/bin/python
+```
 
-Then point Claude Desktop's MCP config at the symlinked venv path.
-Editable installs (`-e .`) embed a path back into `~/Documents/` via
-a `.pth` file, which the sandbox blocks. Use a non-editable install
-for the Claude-spawned venv; keep a separate editable install for
-your own dev terminal if you want hot reload.
+Then point Claude Desktop's MCP config at the symlinked venv path. Editable installs (`-e .`) embed a path back into `~/Documents/` via a `.pth` file, which the sandbox blocks. Use a non-editable install for the Claude-spawned venv; keep a separate editable install for your own dev terminal if you want hot reload.
