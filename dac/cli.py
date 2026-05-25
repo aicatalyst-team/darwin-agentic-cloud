@@ -237,3 +237,107 @@ def mcp_serve() -> None:
     from dac.mcp_server import run as run_mcp
 
     run_mcp()
+
+
+history_app = typer.Typer(help="Query attestation history.", no_args_is_help=True)
+app.add_typer(history_app, name="history")
+
+
+@history_app.command("list")
+def history_list(
+    limit: Annotated[int, typer.Option("--limit", "-n", help="Max rows to return.")] = 20,
+    status: Annotated[str | None, typer.Option("--status", help="Filter by status.")] = None,
+) -> None:
+    """List recent attestations."""
+    from dac.storage import AttestationStore
+
+    store = AttestationStore()
+    rows = store.list_by_status(status, limit=limit) if status else store.list_recent(limit=limit)
+
+    if not rows:
+        console.print("[dim]No attestations stored yet.[/dim]")
+        return
+
+    table = Table(show_header=True, box=None, padding=(0, 1))
+    table.add_column("issued_at", style="dim")
+    table.add_column("status")
+    table.add_column("workload_id")
+    table.add_column("cost", justify="right")
+    table.add_column("wall_time", justify="right")
+    table.add_column("substrate")
+    table.add_column("id (short)", style="dim")
+
+    for r in rows:
+        color = {"ok": "green", "error": "red", "timeout": "yellow", "cost_exceeded": "red"}.get(r.status, "white")
+        from datetime import datetime, timezone
+
+        ts = datetime.fromtimestamp(r.issued_at, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        table.add_row(
+            ts,
+            f"[{color}]{r.status}[/{color}]",
+            r.workload_id,
+            f"${r.cost_usd:.8f}",
+            f"{r.wall_time_sec:.3f}s",
+            r.substrate_id,
+            r.attestation_id[:8],
+        )
+
+    console.print(table)
+
+
+@history_app.command("stats")
+def history_stats() -> None:
+    """Show aggregate stats across stored attestations."""
+    from dac.storage import AttestationStore
+
+    store = AttestationStore()
+    total_count = store.count()
+    total_cost = store.total_cost_usd()
+
+    ok_count = len(store.list_by_status("ok", limit=10**9))
+    err_count = len(store.list_by_status("error", limit=10**9))
+    timeout_count = len(store.list_by_status("timeout", limit=10**9))
+    rejected_count = len(store.list_by_status("cost_exceeded", limit=10**9))
+
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column(style="bold")
+    table.add_column()
+    table.add_row("total executions", str(total_count))
+    table.add_row("total cost", f"${total_cost:.8f}")
+    table.add_row("status: ok", str(ok_count))
+    table.add_row("status: error", str(err_count))
+    table.add_row("status: timeout", str(timeout_count))
+    table.add_row("status: cost_exceeded", str(rejected_count))
+
+    console.print(Panel(table, title="DAC attestation history", border_style="cyan"))
+
+
+@history_app.command("show")
+def history_show(
+    attestation_id: Annotated[str, typer.Argument(help="Attestation ID (full or first 8 chars).")],
+) -> None:
+    """Show the full signed attestation for a given ID."""
+    from dac.storage import AttestationStore
+
+    store = AttestationStore()
+
+    if len(attestation_id) < 36:
+        # Short prefix — find the matching one
+        candidates = [
+            a for a in store.list_recent(limit=10**9)
+            if a.attestation_id.startswith(attestation_id)
+        ]
+        if not candidates:
+            err_console.print(f"[red]No attestation matching prefix:[/red] {attestation_id}")
+            raise typer.Exit(code=2)
+        if len(candidates) > 1:
+            err_console.print(f"[red]Ambiguous prefix:[/red] {attestation_id} matches {len(candidates)} attestations")
+            raise typer.Exit(code=2)
+        attestation_id = candidates[0].attestation_id
+
+    fetched = store.get(attestation_id)
+    if fetched is None:
+        err_console.print(f"[red]Not found:[/red] {attestation_id}")
+        raise typer.Exit(code=2)
+
+    print(json.dumps(fetched.signed_attestation, indent=2))
