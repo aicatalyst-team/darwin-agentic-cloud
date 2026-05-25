@@ -1,17 +1,14 @@
-# Darwinic Agentic Cloud (DAC)
-
-[![CI](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml/badge.svg)](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-
-> The verifiable agentic cloud. Open-source compute for AI agents with cryptographically signed attestations.
+# Darwin Agentic Cloud
 
 [![CI](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml/badge.svg)](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-DAC is a programmatic agentic cloud designed for **AI agents to call directly**. Every execution returns a cryptographically signed attestation containing the workload hash, output hash, substrate identity, cost, and policy compliance proof. Agents that take action based on compute results can verify that what they asked for actually happened.
+> The verifiable agentic cloud. Open-source compute for AI agents with cryptographically signed attestations.
+
+Darwin Agentic Cloud (DAC) is a programmatic compute substrate designed for **AI agents to call directly**. Every execution returns a cryptographically signed attestation containing the workload hash, output hash, substrate identity, cost, and policy compliance proof. Agents that take action based on compute results can verify that what they asked for actually happened.
+
 
 ## Why DAC
 
