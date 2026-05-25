@@ -11,16 +11,16 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from dac.attestation import verify_attestation
-from dac.cost import (
+from darwin.agenticcloud.attestation import verify_attestation
+from darwin.agenticcloud.cost import (
     BudgetExceeded,
     check_budget,
     cost_for_seconds,
     max_possible_cost,
     rate_for_substrate,
 )
-from dac.storage import AttestationStore
-from dac.types import ExecutionResult, WorkloadSpec
+from darwin.agenticcloud.storage import AttestationStore
+from darwin.agenticcloud.types import ExecutionResult, WorkloadSpec
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -92,9 +92,9 @@ def test_budget_rejects_zero_or_negative_cap() -> None:
 def test_runtime_rejects_budget_with_signed_attestation(tmp_path: "Path") -> None:
     """A budget-exceeded workload returns a signed attestation with
     status='cost_exceeded' and never launches the sandbox."""
-    from dac.runtime import Runtime
-    from dac.sandbox import SUBSTRATE_ID
-    from dac.signing import Signer
+    from darwin.agenticcloud.runtime import Runtime
+    from darwin.agenticcloud.sandbox import SUBSTRATE_ID
+    from darwin.agenticcloud.signing import Signer
 
     # Use a stub sandbox that would fail loudly if called
     class ShouldNotBeCalledSandbox:

@@ -24,14 +24,14 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-import dac
-from dac.attestation import verify_attestation
-from dac.runtime import Runtime
-from dac.sandbox import SUBSTRATE_ID
+from darwin import agenticcloud as dac
+from darwin.agenticcloud.attestation import verify_attestation
+from darwin.agenticcloud.runtime import Runtime
+from darwin.agenticcloud.sandbox import SUBSTRATE_ID
 
 # TODO(v0.2): per-role signing keys (cli vs http vs mcp) via HKDF.
 _runtime = Runtime()
-_server = Server("dac")
+_server = Server("darwin-agenticcloud")
 
 
 @_server.list_tools()
@@ -172,7 +172,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
 
 
 async def _handle_run(arguments: dict[str, Any], language: str) -> list[TextContent]:
-    from dac.types import WorkloadSpec
+    from darwin.agenticcloud.types import WorkloadSpec
 
     spec = WorkloadSpec(
         code=arguments["code"],

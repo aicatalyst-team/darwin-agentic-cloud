@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from dac.attestation import build_signed_attestation, verify_attestation
-from dac.signing import Signer
-from dac.storage import AttestationStore
-from dac.types import ExecutionResult, WorkloadSpec
+from darwin.agenticcloud.attestation import build_signed_attestation, verify_attestation
+from darwin.agenticcloud.signing import Signer
+from darwin.agenticcloud.storage import AttestationStore
+from darwin.agenticcloud.types import ExecutionResult, WorkloadSpec
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -157,7 +157,7 @@ def test_total_cost_by_signer(
 # -------------------------------------------------------------------
 def test_runtime_persists_every_attestation(tmp_path: "Path") -> None:
     """Runtime.run() writes the attestation to the store before returning."""
-    from dac.runtime import Runtime
+    from darwin.agenticcloud.runtime import Runtime
 
     store = AttestationStore(db_path=tmp_path / "att.db")
     signer = Signer(key_path=tmp_path / "key.pem")
@@ -165,7 +165,7 @@ def test_runtime_persists_every_attestation(tmp_path: "Path") -> None:
     # Use a stub sandbox that returns deterministic output without Docker
     class StubSandbox:
         def execute(self, code, language, timeout_sec, memory_mb):
-            from dac.sandbox import SUBSTRATE_ID, SandboxResult
+            from darwin.agenticcloud.sandbox import SUBSTRATE_ID, SandboxResult
 
             return SandboxResult(
                 status="ok",
@@ -191,7 +191,7 @@ def test_runtime_persists_every_attestation(tmp_path: "Path") -> None:
 
 def test_runtime_persists_rejected_attestations(tmp_path: "Path") -> None:
     """Even budget-rejected workloads are persisted."""
-    from dac.runtime import Runtime
+    from darwin.agenticcloud.runtime import Runtime
 
     store = AttestationStore(db_path=tmp_path / "att.db")
     signer = Signer(key_path=tmp_path / "key.pem")

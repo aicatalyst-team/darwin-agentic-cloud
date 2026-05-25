@@ -21,13 +21,13 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
-import dac
-from dac.attestation import verify_attestation
-from dac.runtime import Runtime
-from dac.sandbox import SUBSTRATE_ID
-from dac.signing import Signer
-from dac.storage import AttestationStore
-from dac.types import WorkloadSpec
+from darwin import agenticcloud as dac
+from darwin.agenticcloud.attestation import verify_attestation
+from darwin.agenticcloud.runtime import Runtime
+from darwin.agenticcloud.sandbox import SUBSTRATE_ID
+from darwin.agenticcloud.signing import Signer
+from darwin.agenticcloud.storage import AttestationStore
+from darwin.agenticcloud.types import WorkloadSpec
 
 
 # -------------------------------------------------------------------

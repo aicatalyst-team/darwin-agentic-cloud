@@ -1,17 +1,19 @@
-"""DAC command-line interface.
+"""Darwin Agentic Cloud command-line interface.
 
 Examples:
-    dac run hello.py
-    dac run hello.py --timeout 30 --memory 256
-    dac keys show
-    dac attest verify ./attestation.json
+    darwin run hello.py
+    darwin run hello.py --timeout 30 --memory 256
+    darwin keys show
+    darwin attest verify ./attestation.json
+    darwin serve
+    darwin mcp serve
+    darwin history list
+    darwin history stats
 """
 
 from __future__ import annotations
 
 import json
-import sys
-from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated
 
@@ -20,26 +22,34 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from dac.attestation import verify_attestation
-from dac.runtime import Runtime
-from dac.signing import Signer
-from dac.types import WorkloadSpec
+from darwin.agenticcloud.attestation import verify_attestation
+from darwin.agenticcloud.runtime import Runtime
+from darwin.agenticcloud.signing import Signer
+from darwin.agenticcloud.types import WorkloadSpec
 
 app = typer.Typer(
-    name="dac",
-    help="Darwinic Agentic Cloud — verifiable compute for AI agents.",
+    name="darwin",
+    help="Darwin Agentic Cloud — verifiable compute for AI agents.",
     no_args_is_help=True,
     add_completion=False,
 )
 keys_app = typer.Typer(help="Manage signing keys.", no_args_is_help=True)
 attest_app = typer.Typer(help="Work with attestations.", no_args_is_help=True)
+history_app = typer.Typer(help="Query attestation history.", no_args_is_help=True)
+mcp_app = typer.Typer(help="Model Context Protocol (MCP) server.", no_args_is_help=True)
+
 app.add_typer(keys_app, name="keys")
 app.add_typer(attest_app, name="attest")
+app.add_typer(history_app, name="history")
+app.add_typer(mcp_app, name="mcp")
 
 console = Console()
 err_console = Console(stderr=True)
 
 
+# -------------------------------------------------------------------
+# Top-level commands
+# -------------------------------------------------------------------
 @app.command()
 def run(
     file: Annotated[Path, typer.Argument(help="Path to the script to run.")],
@@ -50,7 +60,7 @@ def run(
     save: Annotated[Path | None, typer.Option("--save", help="Write the signed attestation to this path.")] = None,
     json_only: Annotated[bool, typer.Option("--json", help="Print only the signed attestation JSON.")] = False,
 ) -> None:
-    """Execute a script in the DAC sandbox and emit a signed attestation."""
+    """Execute a script in the darwin.agenticcloud sandbox and emit a signed attestation."""
     if not file.exists():
         err_console.print(f"[red]File not found:[/red] {file}")
         raise typer.Exit(code=2)
@@ -88,7 +98,7 @@ def _print_execution(signed_dict: dict, saved_to: Path | None) -> None:
     er = a["execution_result"]
 
     status = er["status"]
-    color = {"ok": "green", "error": "red", "timeout": "yellow", "oom": "yellow"}.get(status, "white")
+    color = {"ok": "green", "error": "red", "timeout": "yellow", "oom": "yellow", "cost_exceeded": "red"}.get(status, "white")
 
     table = Table(show_header=False, box=None, padding=(0, 2))
     table.add_column(style="bold")
@@ -103,7 +113,7 @@ def _print_execution(signed_dict: dict, saved_to: Path | None) -> None:
     table.add_row("signer_key_id", a["signer_key_id"])
     table.add_row("output_hash", er["output_hash"][:16] + "…")
 
-    console.print(Panel(table, title="DAC execution", border_style=color))
+    console.print(Panel(table, title="darwin.agenticcloud execution", border_style=color))
 
     if er["stdout"]:
         console.print(Panel(er["stdout"].rstrip("\n"), title="stdout", border_style="dim"))
@@ -112,6 +122,25 @@ def _print_execution(signed_dict: dict, saved_to: Path | None) -> None:
 
     if saved_to is not None:
         console.print(f"[dim]Signed attestation saved to[/dim] {saved_to}")
+
+
+@app.command()
+def serve(
+    host: Annotated[str, typer.Option("--host", help="Bind address.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", "-p", help="Bind port.")] = 8787,
+    reload: Annotated[bool, typer.Option("--reload", help="Reload on file changes (dev only).")] = False,
+) -> None:
+    """Run the darwin.agenticcloud HTTP server."""
+    import uvicorn
+
+    uvicorn.run("darwin.agenticcloud.server:app", host=host, port=port, reload=reload, log_level="info")
+
+
+@app.command()
+def version() -> None:
+    """Print the Darwin version."""
+    import darwin
+    print(darwin.__version__)
 
 
 # -------------------------------------------------------------------
@@ -127,7 +156,7 @@ def keys_show() -> None:
     table.add_row("key_id", signer.key_id())
     table.add_row("public_key_b64", signer.public_key_b64())
     table.add_row("key_path", str(signer.key_path))
-    console.print(Panel(table, title="DAC signing key", border_style="cyan"))
+    console.print(Panel(table, title="darwin.agenticcloud signing key", border_style="cyan"))
 
 
 @keys_app.command("init")
@@ -181,75 +210,16 @@ def attest_show(
     print(json.dumps(data, indent=2))
 
 
-@app.command()
-def version() -> None:
-    """Print the DAC version."""
-    import dac
-    print(dac.__version__)
-
-
-if __name__ == "__main__":
-    app()
-
-
-@app.command()
-def serve(
-    host: Annotated[str, typer.Option("--host", help="Bind address.")] = "127.0.0.1",
-    port: Annotated[int, typer.Option("--port", "-p", help="Bind port.")] = 8787,
-    reload: Annotated[bool, typer.Option("--reload", help="Reload on file changes (dev only).")] = False,
-) -> None:
-    """Run the DAC HTTP server."""
-    import uvicorn
-
-    uvicorn.run(
-        "dac.server:app",
-        host=host,
-        port=port,
-        reload=reload,
-        log_level="info",
-    )
-
-
-@app.command()
-def serve(
-    host: Annotated[str, typer.Option("--host", help="Bind address.")] = "127.0.0.1",
-    port: Annotated[int, typer.Option("--port", "-p", help="Bind port.")] = 8787,
-    reload: Annotated[bool, typer.Option("--reload", help="Reload on file changes (dev only).")] = False,
-) -> None:
-    """Run the DAC HTTP server."""
-    import uvicorn
-
-    uvicorn.run("dac.server:app", host=host, port=port, reload=reload, log_level="info")
-
-
-mcp_app = typer.Typer(help="Model Context Protocol (MCP) server.", no_args_is_help=True)
-app.add_typer(mcp_app, name="mcp")
-
-
-@mcp_app.command("serve")
-def mcp_serve() -> None:
-    """Run the DAC MCP server on stdio.
-
-    Intended to be spawned by an MCP client (Claude Desktop, Cursor, etc.)
-    over stdio. Do not run this manually unless you're piping JSON-RPC
-    into it.
-    """
-    from dac.mcp_server import run as run_mcp
-
-    run_mcp()
-
-
-history_app = typer.Typer(help="Query attestation history.", no_args_is_help=True)
-app.add_typer(history_app, name="history")
-
-
+# -------------------------------------------------------------------
+# history
+# -------------------------------------------------------------------
 @history_app.command("list")
 def history_list(
     limit: Annotated[int, typer.Option("--limit", "-n", help="Max rows to return.")] = 20,
     status: Annotated[str | None, typer.Option("--status", help="Filter by status.")] = None,
 ) -> None:
     """List recent attestations."""
-    from dac.storage import AttestationStore
+    from darwin.agenticcloud.storage import AttestationStore
 
     store = AttestationStore()
     rows = store.list_by_status(status, limit=limit) if status else store.list_recent(limit=limit)
@@ -267,10 +237,10 @@ def history_list(
     table.add_column("substrate")
     table.add_column("id (short)", style="dim")
 
+    from datetime import datetime, timezone
+
     for r in rows:
         color = {"ok": "green", "error": "red", "timeout": "yellow", "cost_exceeded": "red"}.get(r.status, "white")
-        from datetime import datetime, timezone
-
         ts = datetime.fromtimestamp(r.issued_at, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         table.add_row(
             ts,
@@ -288,7 +258,7 @@ def history_list(
 @history_app.command("stats")
 def history_stats() -> None:
     """Show aggregate stats across stored attestations."""
-    from dac.storage import AttestationStore
+    from darwin.agenticcloud.storage import AttestationStore
 
     store = AttestationStore()
     total_count = store.count()
@@ -309,7 +279,7 @@ def history_stats() -> None:
     table.add_row("status: timeout", str(timeout_count))
     table.add_row("status: cost_exceeded", str(rejected_count))
 
-    console.print(Panel(table, title="DAC attestation history", border_style="cyan"))
+    console.print(Panel(table, title="darwin.agenticcloud attestation history", border_style="cyan"))
 
 
 @history_app.command("show")
@@ -317,12 +287,11 @@ def history_show(
     attestation_id: Annotated[str, typer.Argument(help="Attestation ID (full or first 8 chars).")],
 ) -> None:
     """Show the full signed attestation for a given ID."""
-    from dac.storage import AttestationStore
+    from darwin.agenticcloud.storage import AttestationStore
 
     store = AttestationStore()
 
     if len(attestation_id) < 36:
-        # Short prefix — find the matching one
         candidates = [
             a for a in store.list_recent(limit=10**9)
             if a.attestation_id.startswith(attestation_id)
@@ -341,3 +310,23 @@ def history_show(
         raise typer.Exit(code=2)
 
     print(json.dumps(fetched.signed_attestation, indent=2))
+
+
+# -------------------------------------------------------------------
+# mcp
+# -------------------------------------------------------------------
+@mcp_app.command("serve")
+def mcp_serve() -> None:
+    """Run the darwin.agenticcloud MCP server on stdio.
+
+    Intended to be spawned by an MCP client (Claude Desktop, Cursor, etc.)
+    over stdio. Do not run this manually unless you're piping JSON-RPC
+    into it.
+    """
+    from darwin.agenticcloud.mcp_server import run as run_mcp
+
+    run_mcp()
+
+
+if __name__ == "__main__":
+    app()

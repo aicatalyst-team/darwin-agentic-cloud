@@ -6,8 +6,8 @@ SHELL := /bin/bash
 # -------------------------------------------------------------------
 PYTHON      := python3
 UV          := uv
-PACKAGE     := dac
-SRC_DIRS    := dac tests
+PACKAGE     := darwin
+SRC_DIRS    := darwin tests
 PORT        := 8787
 HOST        := 127.0.0.1
 
@@ -95,7 +95,7 @@ mcp: ## Run the DAC MCP server (stdio transport)
 
 .PHONY: shell
 shell: ## Open a Python shell with dac imported
-	$(UV) run python -c "import dac; print(f'DAC v{dac.__version__} loaded'); import code; code.interact(local={'dac': dac})"
+	$(UV) run python -c "from darwin import agenticcloud as dac; print(f'Darwin v{dac.__version__} loaded'); import code; code.interact(local={'dac': dac})"
 
 # -------------------------------------------------------------------
 # Docker
@@ -137,7 +137,7 @@ build: clean ## Build wheel and sdist
 
 .PHONY: version
 version: ## Show the current version
-	@$(UV) run python -c "import dac; print(dac.__version__)"
+	@$(UV) run python -c "from darwin import agenticcloud as dac; print(dac.__version__)"
 
 # -------------------------------------------------------------------
 # Docs

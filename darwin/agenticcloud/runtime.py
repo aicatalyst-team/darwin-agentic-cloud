@@ -13,13 +13,13 @@ from __future__ import annotations
 import time
 import uuid
 
-from dac.attestation import build_signed_attestation
-from dac.cost import BudgetExceeded, check_budget, cost_for_seconds
-from dac.hashing import sha256_hex
-from dac.sandbox import SUBSTRATE_ID, DockerSandbox, SandboxResult
-from dac.signing import Signer
-from dac.storage import AttestationStore
-from dac.types import ExecutionResult, SignedAttestation, WorkloadSpec
+from darwin.agenticcloud.attestation import build_signed_attestation
+from darwin.agenticcloud.cost import BudgetExceeded, check_budget, cost_for_seconds
+from darwin.agenticcloud.hashing import sha256_hex
+from darwin.agenticcloud.sandbox import SUBSTRATE_ID, DockerSandbox, SandboxResult
+from darwin.agenticcloud.signing import Signer
+from darwin.agenticcloud.storage import AttestationStore
+from darwin.agenticcloud.types import ExecutionResult, SignedAttestation, WorkloadSpec
 
 
 class Runtime:

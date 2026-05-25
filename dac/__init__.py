@@ -1,7 +1,0 @@
-"""Darwinic Agentic Cloud (DAC)."""
-
-__version__ = "0.1.0"
-__author__ = "Vladimir J Edouard"
-__license__ = "Apache-2.0"
-
-ATTESTATION_SCHEMA = "dac.darwinic.cloud/attestation/v0.1"

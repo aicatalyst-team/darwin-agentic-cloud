@@ -5,7 +5,7 @@ These are the absolute floor — if these fail, nothing else can work.
 
 from __future__ import annotations
 
-import dac
+from darwin import agenticcloud as dac
 
 
 def test_package_imports() -> None:
@@ -23,5 +23,5 @@ def test_package_has_version() -> None:
 def test_attestation_schema_is_versioned() -> None:
     """The attestation schema identifier is set and stable."""
     assert isinstance(dac.ATTESTATION_SCHEMA, str)
-    assert "dac.darwinic.cloud" in dac.ATTESTATION_SCHEMA
+    assert "darwin.cloud/agenticcloud" in dac.ATTESTATION_SCHEMA
     assert "/v" in dac.ATTESTATION_SCHEMA

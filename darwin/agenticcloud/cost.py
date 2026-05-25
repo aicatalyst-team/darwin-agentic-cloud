@@ -13,7 +13,7 @@ Enforcement:
 
 from __future__ import annotations
 
-from dac.types import WorkloadSpec
+from darwin.agenticcloud.types import WorkloadSpec
 
 # Rate card: USD per wall-time second by substrate.
 # Tracked separately from substrate identity so a substrate can update

@@ -14,10 +14,10 @@ import time
 import uuid
 from dataclasses import asdict
 
-from dac import ATTESTATION_SCHEMA
-from dac.hashing import canonical_json, content_hash
-from dac.signing import Signer, verify_signature
-from dac.types import Attestation, ExecutionResult, SignedAttestation, WorkloadSpec
+from darwin.agenticcloud import ATTESTATION_SCHEMA
+from darwin.agenticcloud.hashing import canonical_json, content_hash
+from darwin.agenticcloud.signing import Signer, verify_signature
+from darwin.agenticcloud.types import Attestation, ExecutionResult, SignedAttestation, WorkloadSpec
 
 
 def build_signed_attestation(

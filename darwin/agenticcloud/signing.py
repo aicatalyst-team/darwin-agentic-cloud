@@ -1,6 +1,6 @@
 """Ed25519 signing for DAC attestations.
 
-Stores a local keypair at ~/.dac/keys/signing.pem. In production this
+Stores a local keypair at ~/.darwin/agenticcloud/keys/signing.pem. In production this
 gets swapped for Sigstore + OIDC, but the Signer interface stays the
 same so callers don't change.
 """
@@ -16,9 +16,9 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PublicKey,
 )
 
-from dac.hashing import sha256_hex
+from darwin.agenticcloud.hashing import sha256_hex
 
-DEFAULT_KEY_DIR = Path.home() / ".dac" / "keys"
+DEFAULT_KEY_DIR = Path.home() / ".darwin" / "agenticcloud" / "keys"
 DEFAULT_KEY_PATH = DEFAULT_KEY_DIR / "signing.pem"
 
 

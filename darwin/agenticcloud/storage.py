@@ -26,9 +26,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
-from dac.types import SignedAttestation
+from darwin.agenticcloud.types import SignedAttestation
 
-DEFAULT_DB_PATH = Path.home() / ".dac" / "attestations.db"
+DEFAULT_DB_PATH = Path.home() / ".darwin" / "agenticcloud" / "attestations.db"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS attestations (

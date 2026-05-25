@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 
 import pytest
 
-from dac.attestation import build_signed_attestation, verify_attestation
-from dac.signing import Signer
-from dac.types import ExecutionResult, WorkloadSpec
+from darwin.agenticcloud.attestation import build_signed_attestation, verify_attestation
+from darwin.agenticcloud.signing import Signer
+from darwin.agenticcloud.types import ExecutionResult, WorkloadSpec
 
 
 # -------------------------------------------------------------------
@@ -72,7 +72,7 @@ def test_attestation_includes_required_fields(signer, spec, result) -> None:
     """The attestation payload contains all required fields."""
     signed = build_signed_attestation(spec, result, signer)
     a = signed.attestation
-    assert a["schema"].startswith("dac.darwinic.cloud/attestation/")
+    assert a["schema"].startswith("darwin.cloud/agenticcloud/attestation/")
     assert a["attestation_id"]
     assert a["workload_spec_hash"]
     assert a["workload_spec"] == {

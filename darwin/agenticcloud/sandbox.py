@@ -25,7 +25,7 @@ import docker
 from docker.errors import APIError, ContainerError, ImageNotFound
 from docker.models.containers import Container
 
-from dac.hashing import sha256_hex
+from darwin.agenticcloud.hashing import sha256_hex
 
 # Base images we trust. Pin by digest in production.
 IMAGE_PYTHON = "python:3.11-slim"
