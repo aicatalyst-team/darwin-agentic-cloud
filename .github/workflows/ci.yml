@@ -1,0 +1,141 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: "1"
+  FORCE_COLOR: "1"
+
+jobs:
+  # ---------------------------------------------------------------
+  # Lint and type check
+  # ---------------------------------------------------------------
+  lint:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --extra dev --extra test
+
+      - name: Ruff lint
+        run: uv run ruff check dac tests
+
+      - name: Ruff format check
+        run: uv run ruff format --check dac tests
+
+      - name: Mypy
+        run: uv run mypy dac
+        continue-on-error: true
+
+  # ---------------------------------------------------------------
+  # Unit tests (no Docker needed)
+  # ---------------------------------------------------------------
+  test-unit:
+    name: Unit tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --extra dev --extra test
+
+      - name: Run unit tests
+        run: uv run pytest -m "not integration" --cov=dac --cov-report=xml --cov-report=term
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------
+  # Integration tests (Docker required)
+  # ---------------------------------------------------------------
+  test-integration:
+    name: Integration tests (Docker)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      contains(github.event.pull_request.labels.*.name, 'run-integration')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --extra dev --extra test
+
+      - name: Run integration tests
+        run: uv run pytest -m integration -v
+        timeout-minutes: 10
+
+  # ---------------------------------------------------------------
+  # DCO sign-off check
+  # ---------------------------------------------------------------
+  dco:
+    name: DCO sign-off check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check DCO sign-off on all commits
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          MISSING=0
+          for sha in $(git log --format=%H "$BASE_SHA..$HEAD_SHA"); do
+            if ! git log -1 --format=%B "$sha" | grep -qE "^Signed-off-by: .+ <.+@.+>$"; then
+              echo "::error::Commit $sha is missing Signed-off-by line"
+              MISSING=1
+            fi
+          done
+          if [ $MISSING -ne 0 ]; then
+            echo ""
+            echo "All commits must be signed off under the Developer Certificate of Origin."
+            echo "Use 'git commit -s' or configure 'git config format.signOff true'."
+            exit 1
+          fi

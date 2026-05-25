@@ -1,0 +1,38 @@
+name: Feature request
+description: Propose a new feature or capability
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a feature. For significant changes (new public APIs, attestation format changes, etc.), please consider opening an RFC in `docs/rfc/` instead.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this solve? Who has it?
+      placeholder: As an agent operator, I need to ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What do you want DAC to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider? Why are they worse?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Use cases, prior art, references.
