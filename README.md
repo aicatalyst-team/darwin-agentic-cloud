@@ -154,3 +154,22 @@ If you use DAC in academic work, please cite:
   url = {https://github.com/vje013/darwin-agentic-cloud}
 }
 ```
+
+## macOS Claude Desktop setup
+
+Claude Desktop's renderer process runs sandboxed under macOS Seatbelt
+and cannot read inside `~/Documents/`. If your project lives there,
+the venv must live outside it.
+
+Recommended layout:
+
+    mkdir -p ~/.local/share/darwin-agentic-cloud
+    uv venv ~/.local/share/darwin-agentic-cloud/.venv --python 3.12
+    ln -s ~/.local/share/darwin-agentic-cloud/.venv .venv
+    uv pip install . --python ~/.local/share/darwin-agentic-cloud/.venv/bin/python
+
+Then point Claude Desktop's MCP config at the symlinked venv path.
+Editable installs (`-e .`) embed a path back into `~/Documents/` via
+a `.pth` file, which the sandbox blocks. Use a non-editable install
+for the Claude-spawned venv; keep a separate editable install for
+your own dev terminal if you want hot reload.
