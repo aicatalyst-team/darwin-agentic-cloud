@@ -190,3 +190,21 @@ def version() -> None:
 
 if __name__ == "__main__":
     app()
+
+
+@app.command()
+def serve(
+    host: Annotated[str, typer.Option("--host", help="Bind address.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", "-p", help="Bind port.")] = 8787,
+    reload: Annotated[bool, typer.Option("--reload", help="Reload on file changes (dev only).")] = False,
+) -> None:
+    """Run the DAC HTTP server."""
+    import uvicorn
+
+    uvicorn.run(
+        "dac.server:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
