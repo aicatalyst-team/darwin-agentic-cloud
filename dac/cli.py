@@ -208,3 +208,32 @@ def serve(
         reload=reload,
         log_level="info",
     )
+
+
+@app.command()
+def serve(
+    host: Annotated[str, typer.Option("--host", help="Bind address.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", "-p", help="Bind port.")] = 8787,
+    reload: Annotated[bool, typer.Option("--reload", help="Reload on file changes (dev only).")] = False,
+) -> None:
+    """Run the DAC HTTP server."""
+    import uvicorn
+
+    uvicorn.run("dac.server:app", host=host, port=port, reload=reload, log_level="info")
+
+
+mcp_app = typer.Typer(help="Model Context Protocol (MCP) server.", no_args_is_help=True)
+app.add_typer(mcp_app, name="mcp")
+
+
+@mcp_app.command("serve")
+def mcp_serve() -> None:
+    """Run the DAC MCP server on stdio.
+
+    Intended to be spawned by an MCP client (Claude Desktop, Cursor, etc.)
+    over stdio. Do not run this manually unless you're piping JSON-RPC
+    into it.
+    """
+    from dac.mcp_server import run as run_mcp
+
+    run_mcp()
