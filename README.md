@@ -7,6 +7,8 @@
 
 > The verifiable agentic cloud. Open-source compute for AI agents with cryptographically signed attestations.
 
+**Live demo:** https://darwin-agentic-cloud.fly.dev/docs
+
 Darwin Agentic Cloud (DAC) is a programmatic compute substrate designed for **AI agents to call directly**. Every execution returns a cryptographically signed attestation containing the workload hash, output hash, substrate identity, cost, and policy compliance proof. Agents that take action based on compute results can verify that what they asked for actually happened.
 
 
