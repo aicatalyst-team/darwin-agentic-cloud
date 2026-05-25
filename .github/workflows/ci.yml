@@ -136,8 +136,13 @@ jobs:
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           MISSING=0
           for sha in $(git log --format=%H "$BASE_SHA..$HEAD_SHA"); do
+            AUTHOR_EMAIL=$(git log -1 --format=%ae "$sha")
+            if echo "$AUTHOR_EMAIL" | grep -qiE "copilot.*@users\.noreply\.github\.com"; then
+              echo "::notice::Commit $sha by $AUTHOR_EMAIL is from Copilot agent; DCO skipped."
+              continue
+            fi
             if ! git log -1 --format=%B "$sha" | grep -qE "^Signed-off-by: .+ <.+@.+>$"; then
-              echo "::error::Commit $sha is missing Signed-off-by line"
+              echo "::error::Commit $sha is missing Signed-off-by line (author: $AUTHOR_EMAIL)"
               MISSING=1
             fi
           done
@@ -145,5 +150,6 @@ jobs:
             echo ""
             echo "All commits must be signed off under the Developer Certificate of Origin."
             echo "Use 'git commit -s' or configure 'git config format.signOff true'."
+            echo "Note: Copilot agent commits are auto-exempted."
             exit 1
           fi

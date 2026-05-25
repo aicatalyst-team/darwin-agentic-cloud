@@ -9,6 +9,8 @@
 3. If a PR opened from this task fails CI, fix and retry up to 3 times. After 3 failures, add the `needs-human` label and a comment explaining the blocker.
 4. If a PR is closed by a maintainer with a rationale, do NOT reopen. Add the rationale as a comment on this issue and check the box.
 5. Every 6 hours, this issue gets a fresh `@copilot` mention via the outreach-loop workflow. When that happens, pick up where you left off.
+6. **Every commit must be DCO signed-off.** Use `git commit -s` or run `git rebase --signoff main` before pushing. If a PR fails the DCO check, rewrite the affected commits with `Signed-off-by:` trailers and force-push. (Note: CI is configured to auto-exempt `copilot[bot]` author commits, but signing off is still good hygiene.)
+7. **Fix-it-when-you-see-it rule.** If a CI check fails for any reason that is a systemic / repo-config issue (not a bug in your own code), open a separate PR to fix the underlying config, then return to the original task. Examples: missing CI job for a new file type, outdated GitHub Actions version, missing dependency in pyproject.toml, broken lint rule. Do NOT work around it; fix the root cause.
 
 ## Phase 1: MCP server registry submissions
 
