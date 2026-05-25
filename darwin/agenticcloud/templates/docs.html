@@ -351,7 +351,7 @@ body {
 <header class="topbar">
   <div class="topbar-left">
     <div class="brand"><span class="accent">darwin.</span>agenticcloud</div>
-    <span class="brand-tag" id="version-tag">v0.1.0</span>
+    <span class="brand-tag" id="version-tag">…</span>
   </div>
   <div class="topbar-actions">
     <a class="topbar-link" href="/openapi.json">OpenAPI</a>
@@ -369,7 +369,7 @@ body {
   </p>
   <div class="hero-meta">
     <span class="chip live" id="status-chip">Live</span>
-    <span class="chip alpha">Alpha · v0.1.0</span>
+    <span class="chip alpha" id="alpha-chip">Alpha</span>
     <span class="chip" id="key-chip">key: <span style="color:var(--md-sys-color-on-surface)">loading…</span></span>
     <span class="chip" id="substrate-chip">substrate: <span style="color:var(--md-sys-color-on-surface)">loading…</span></span>
   </div>
@@ -409,6 +409,7 @@ async function loadIdentity() {
       `substrate: <span style="color:var(--md-sys-color-on-surface)">${data.substrate_id}</span>`;
     document.querySelector('#schema-uri').textContent = `schema: ${data.schema}`;
     document.querySelector('#version-tag').textContent = `v${data.version}`;
+    document.querySelector('#alpha-chip').textContent = `Alpha · v${data.version}`;
   } catch (e) {
     document.querySelector('#status-chip').textContent = 'Offline';
     document.querySelector('#status-chip').style.color = 'var(--brand-amber)';
