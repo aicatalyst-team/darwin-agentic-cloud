@@ -81,8 +81,26 @@ def run(
         cost_cap_usd=cost_cap,
     )
 
+    from darwin.agenticcloud.ui import (
+        StepLine,
+        render_attestation_panel,
+        signature_animation,
+    )
+
     runtime = Runtime()
-    signed = runtime.run(spec)
+
+    # Single-line progressive ticker shown only when not in --json mode
+    if not json_only:
+        with StepLine(console, f"darwin.agenticcloud · running {file.name}") as step:
+            step.tick("budget")
+            step.tick("sandbox")
+            step.tick("exec")
+            signed = runtime.run(spec)
+            step.tick("hash")
+            signature_animation(console, frames=0.4)
+            step.tick("sign")
+    else:
+        signed = runtime.run(spec)
 
     signed_dict = {
         "attestation": signed.attestation,
@@ -97,7 +115,32 @@ def run(
         print(json.dumps(signed_dict, indent=2))
         return
 
-    _print_execution(signed_dict, save)
+    # Branded attestation panel
+    att = signed.attestation
+    result = att.get("execution_result", {})
+
+    import darwin as _darwin
+    panel = render_attestation_panel(
+        workload_hash="sha256:" + att.get("workload_spec_hash", "?"),
+        output_hash="sha256:" + result.get("output_hash", "?"),
+        substrate=result.get("substrate_id", "local-docker-v0"),
+        signer_key_id=att.get("signer_key_id", signed.public_key_b64[:16]),
+        cost_usd=result.get("cost_usd", 0.0),
+        cost_cap_usd=spec.cost_cap_usd,
+        verified=True,
+        attestation_id=att.get("attestation_id"),
+        issued_at=att.get("issued_at"),
+        public_key_b64=signed.public_key_b64,
+        schema_full=att.get("schema", "darwin.cloud/agenticcloud/attestation/v0.1"),
+        version=_darwin.__version__,
+    )
+    console.print(panel)
+
+    # Echo workload stdout / stderr so users see their output
+    if result.get("stdout"):
+        console.print(result["stdout"], end="" if result["stdout"].endswith("\n") else "\n")
+    if result.get("stderr"):
+        err_console.print(result["stderr"], end="" if result["stderr"].endswith("\n") else "\n")
 
 
 def _print_execution(signed_dict: dict, saved_to: Path | None) -> None:
@@ -144,9 +187,40 @@ def serve(
     reload: Annotated[
         bool, typer.Option("--reload", help="Reload on file changes (dev only).")
     ] = False,
+    quiet: Annotated[
+        bool, typer.Option("--quiet", help="Suppress branded boot banner.")
+    ] = False,
 ) -> None:
     """Run the darwin.agenticcloud HTTP server."""
     import uvicorn
+
+    if not quiet:
+        import darwin
+        from darwin.agenticcloud import ATTESTATION_SCHEMA
+        from darwin.agenticcloud.signing import Signer
+        from darwin.agenticcloud.ui import BootStep, matrix_boot, print_banner
+
+        signer = Signer()
+        matrix_boot(
+            console,
+            [
+                BootStep("initializing darwin.agenticcloud runtime"),
+                BootStep("loading ed25519 signing key"),
+                BootStep(f"verifying schema {ATTESTATION_SCHEMA}"),
+                BootStep("opening sqlite at ~/.darwin/agenticcloud/attestations.db"),
+                BootStep("preparing docker sandbox (lazy)"),
+                BootStep(f"binding {host}:{port}"),
+            ],
+        )
+        print_banner(
+            console,
+            version=darwin.__version__,
+            schema=ATTESTATION_SCHEMA,
+            signer_key_id=signer.key_id(),
+            substrate_id="local-docker-v0",
+        )
+        console.print(f"  [bold #00ff01]READY[/bold #00ff01]  http://{host}:{port}/docs")
+        console.print("  [dim]press ctrl-c to terminate[/dim]\n")
 
     uvicorn.run(
         "darwin.agenticcloud.server:app", host=host, port=port, reload=reload, log_level="info"
@@ -155,10 +229,16 @@ def serve(
 
 @app.command()
 def version() -> None:
-    """Print the Darwin version."""
+    """Print the Darwin version and banner."""
     import darwin
+    from darwin.agenticcloud import ATTESTATION_SCHEMA
+    from darwin.agenticcloud.ui import print_banner
 
-    print(darwin.__version__)
+    print_banner(
+        console,
+        version=darwin.__version__,
+        schema=ATTESTATION_SCHEMA,
+    )
 
 
 # -------------------------------------------------------------------
@@ -167,14 +247,26 @@ def version() -> None:
 @keys_app.command("show")
 def keys_show() -> None:
     """Show the current signing key identity."""
+    import darwin
+    from darwin.agenticcloud import ATTESTATION_SCHEMA
+    from darwin.agenticcloud.ui import print_banner
+
     signer = Signer()
+    print_banner(
+        console,
+        version=darwin.__version__,
+        schema=ATTESTATION_SCHEMA,
+        signer_key_id=signer.key_id(),
+        substrate_id="local-docker-v0",
+    )
+
     table = Table(show_header=False, box=None, padding=(0, 2))
     table.add_column(style="bold")
     table.add_column()
     table.add_row("key_id", signer.key_id())
     table.add_row("public_key_b64", signer.public_key_b64())
     table.add_row("key_path", str(signer.key_path))
-    console.print(Panel(table, title="darwin.agenticcloud signing key", border_style="cyan"))
+    console.print(Panel(table, title="darwin.agenticcloud signing key", border_style="#00ff01"))
 
 
 @keys_app.command("init")
@@ -439,14 +531,32 @@ def mcp_install(
 
     config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
-    console.print(
-        f"[green]✓ Installed darwin.agenticcloud as MCP server '{name}' in {client}.[/green]"
+    # Branded configuration receipt
+    import darwin
+    from darwin.agenticcloud import ATTESTATION_SCHEMA
+    from darwin.agenticcloud.ui import print_banner, render_mcp_install_receipt
+
+    print_banner(
+        console,
+        version=darwin.__version__,
+        schema=ATTESTATION_SCHEMA,
     )
-    console.print(f"  config:  {config_path}")
-    console.print(f"  command: {sys.executable}")
-    console.print("  args:    -m darwin.agenticcloud.mcp_server")
-    console.print()
-    console.print("[dim]Restart your MCP client to pick up the change.[/dim]")
+
+    receipt = render_mcp_install_receipt(
+        config_path=str(config_path),
+        server_name=name,
+        python_interpreter=sys.executable,
+        tool_names=[
+            "dac_run_python",
+            "dac_run_node",
+            "dac_verify_attestation",
+            "dac_identity",
+            "dac_history_recent",
+            "dac_history_stats",
+            "dac_history_get",
+        ],
+    )
+    console.print(receipt)
 
 
 @mcp_app.command("uninstall")
