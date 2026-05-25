@@ -15,6 +15,7 @@ or Kata Containers with the same interface.
 
 from __future__ import annotations
 
+import contextlib
 import io
 import tarfile
 import time
@@ -77,9 +78,7 @@ class DockerSandbox:
         try:
             self._client.ping()
         except Exception as e:
-            raise RuntimeError(
-                "Docker daemon is not reachable. Is Docker Desktop running?"
-            ) from e
+            raise RuntimeError("Docker daemon is not reachable. Is Docker Desktop running?") from e
 
     def execute(
         self,
@@ -92,8 +91,7 @@ class DockerSandbox:
         """Run code in a sandboxed container and return the result."""
         if language not in LANGUAGE_IMAGES:
             raise ValueError(
-                f"Unsupported language: {language!r}. "
-                f"Supported: {sorted(LANGUAGE_IMAGES)}"
+                f"Unsupported language: {language!r}. Supported: {sorted(LANGUAGE_IMAGES)}"
             )
 
         image = LANGUAGE_IMAGES[language]
@@ -185,10 +183,8 @@ class DockerSandbox:
 
         finally:
             if container is not None:
-                try:
+                with contextlib.suppress(Exception):
                     container.remove(force=True)
-                except Exception:
-                    pass
 
     def _ensure_image(self, image: str) -> None:
         """Pull the image if it's not present locally."""
