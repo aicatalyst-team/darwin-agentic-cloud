@@ -101,6 +101,8 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         title="Darwin Agentic Cloud",
         description="Verifiable compute for AI agents with cryptographically signed attestations.",
         version=dac.__version__,
+        docs_url="/docs/swagger",
+        redoc_url="/docs/redoc",
     )
 
     @app.get("/healthz", tags=["health"])
@@ -204,6 +206,22 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         if fetched is None:
             raise HTTPException(status_code=404, detail="Attestation not found")
         return fetched.signed_attestation
+
+    # Custom branded docs page (Material 3, dark, brand colors)
+    from fastapi.responses import HTMLResponse
+    from pathlib import Path as _Path
+
+    _TEMPLATE_PATH = _Path(__file__).parent / "templates" / "docs.html"
+
+    @app.get("/docs", response_class=HTMLResponse, include_in_schema=False)
+    async def custom_docs() -> HTMLResponse:
+        """Serve the branded Darwin docs page."""
+        return HTMLResponse(_TEMPLATE_PATH.read_text(encoding="utf-8"))
+
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    async def root() -> HTMLResponse:
+        """Root: redirect to the docs page."""
+        return HTMLResponse(_TEMPLATE_PATH.read_text(encoding="utf-8"))
 
     return app
 

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Darwin Agentic Cloud — verifiable compute for AI agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Brand */
+  --brand-green: #00ff01;
+  --brand-amber: #fdb515;
+  --brand-black: #000000;
+
+  /* M3 dark surface tokens */
+  --md-sys-color-surface: #0a0a0a;
+  --md-sys-color-surface-container: #141414;
+  --md-sys-color-surface-container-high: #1c1c1c;
+  --md-sys-color-surface-container-highest: #242424;
+  --md-sys-color-outline: #3a3a3a;
+  --md-sys-color-outline-variant: #2a2a2a;
+  --md-sys-color-on-surface: #e6e6e6;
+  --md-sys-color-on-surface-variant: #a0a0a0;
+  --md-sys-color-on-surface-dim: #6a6a6a;
+
+  /* Semantic */
+  --color-verified: var(--brand-green);
+  --color-active: var(--brand-amber);
+  --color-method-get: #4fc3f7;
+  --color-method-post: var(--brand-green);
+  --color-method-delete: #f44336;
+
+  /* Type */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Radii (M3) */
+  --shape-xs: 4px;
+  --shape-sm: 8px;
+  --shape-md: 12px;
+  --shape-lg: 16px;
+  --shape-xl: 28px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--brand-black);
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ----- Top bar ----- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--brand-black);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.brand .accent { color: var(--brand-green); }
+.brand-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--brand-amber);
+  background: rgba(253, 181, 21, 0.08);
+  border: 1px solid rgba(253, 181, 21, 0.3);
+  padding: 2px 8px;
+  border-radius: var(--shape-xs);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.topbar-actions {
+  display: flex; gap: 12px; align-items: center;
+}
+.topbar-link {
+  color: var(--md-sys-color-on-surface-variant);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: var(--shape-sm);
+  transition: color 0.15s, background 0.15s;
+}
+.topbar-link:hover {
+  color: var(--brand-green);
+  background: var(--md-sys-color-surface-container);
+}
+
+/* ----- Hero ----- */
+.hero {
+  padding: 64px 32px 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.hero h1 {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+  line-height: 1.1;
+}
+.hero h1 .accent { color: var(--brand-green); }
+.hero .tagline {
+  font-size: 20px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 32px;
+  max-width: 700px;
+  line-height: 1.4;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+.chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: var(--shape-xs);
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip.live {
+  color: var(--brand-green);
+  border-color: rgba(0, 255, 1, 0.4);
+  background: rgba(0, 255, 1, 0.05);
+}
+.chip.live::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--brand-green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--brand-green);
+}
+.chip.alpha {
+  color: var(--brand-amber);
+  border-color: rgba(253, 181, 21, 0.4);
+  background: rgba(253, 181, 21, 0.05);
+}
+
+/* ----- Section ----- */
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px 64px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-dim);
+  margin: 48px 0 16px;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* ----- Endpoint card ----- */
+.endpoint {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--shape-md);
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.endpoint:hover {
+  border-color: var(--md-sys-color-outline);
+}
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.method {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: var(--shape-xs);
+  min-width: 60px;
+  text-align: center;
+  text-transform: uppercase;
+}
+.method-get {
+  background: rgba(79, 195, 247, 0.12);
+  color: var(--color-method-get);
+  border: 1px solid rgba(79, 195, 247, 0.3);
+}
+.method-post {
+  background: rgba(0, 255, 1, 0.08);
+  color: var(--color-method-post);
+  border: 1px solid rgba(0, 255, 1, 0.3);
+}
+.method-delete {
+  background: rgba(244, 67, 54, 0.12);
+  color: var(--color-method-delete);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+.path {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  flex: 1;
+}
+.summary {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 13px;
+}
+.chevron {
+  color: var(--md-sys-color-on-surface-dim);
+  transition: transform 0.2s;
+  font-family: var(--font-mono);
+}
+.endpoint.open .chevron { transform: rotate(90deg); }
+.endpoint-body {
+  display: none;
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+.endpoint.open .endpoint-body { display: block; }
+.endpoint-description {
+  padding: 16px 0;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ----- Try it ----- */
+.try-section {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--brand-black);
+  border-radius: var(--shape-sm);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+.try-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+.try-button {
+  background: var(--brand-green);
+  color: var(--brand-black);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--shape-sm);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.05s;
+}
+.try-button:hover { opacity: 0.9; }
+.try-button:active { transform: scale(0.98); }
+.try-output {
+  margin-top: 12px;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: var(--shape-xs);
+  color: var(--md-sys-color-on-surface);
+  white-space: pre-wrap;
+  overflow-x: auto;
+  display: none;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.try-output.visible { display: block; }
+.try-output.success { border-left: 3px solid var(--brand-green); }
+.try-output.error { border-left: 3px solid var(--brand-amber); }
+
+/* ----- Footer ----- */
+.footer {
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding: 32px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-dim);
+  font-size: 13px;
+}
+.footer a {
+  color: var(--md-sys-color-on-surface-variant);
+  text-decoration: none;
+  margin: 0 12px;
+}
+.footer a:hover { color: var(--brand-green); }
+.footer .schema-uri {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-top: 12px;
+  color: var(--brand-amber);
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--md-sys-color-surface-container) 25%, var(--md-sys-color-surface-container-high) 50%, var(--md-sys-color-surface-container) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--shape-sm);
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .topbar { padding: 12px 16px; }
+  .hero { padding: 32px 16px; }
+  .hero h1 { font-size: 32px; }
+  .hero .tagline { font-size: 16px; }
+  .container { padding: 0 16px 32px; }
+  .endpoint-header { flex-wrap: wrap; padding: 12px 16px; }
+  .endpoint-body { padding: 0 16px 16px; }
+  .summary { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="brand"><span class="accent">darwin.</span>agenticcloud</div>
+    <span class="brand-tag" id="version-tag">v0.1.0</span>
+  </div>
+  <div class="topbar-actions">
+    <a class="topbar-link" href="/openapi.json">OpenAPI</a>
+    <a class="topbar-link" href="/docs/swagger">Swagger</a>
+    <a class="topbar-link" href="https://github.com/vje013/darwin-agentic-cloud">GitHub →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Verifiable compute<br>for <span class="accent">AI agents</span>.</h1>
+  <p class="tagline">
+    Every execution returns a cryptographically signed receipt that binds
+    the code, the output, the substrate, the cost, and the signer's
+    identity. Tamper-evident. Auditable. Open-source.
+  </p>
+  <div class="hero-meta">
+    <span class="chip live" id="status-chip">Live</span>
+    <span class="chip alpha">Alpha · v0.1.0</span>
+    <span class="chip" id="key-chip">key: <span style="color:var(--md-sys-color-on-surface)">loading…</span></span>
+    <span class="chip" id="substrate-chip">substrate: <span style="color:var(--md-sys-color-on-surface)">loading…</span></span>
+  </div>
+</section>
+
+<main class="container">
+
+  <div class="section-title">Endpoints</div>
+  <div id="endpoints">
+    <div class="skeleton" style="height: 60px;"></div>
+    <div class="skeleton" style="height: 60px; margin-top: 8px;"></div>
+    <div class="skeleton" style="height: 60px; margin-top: 8px;"></div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div>
+    <a href="https://github.com/vje013/darwin-agentic-cloud">github.com/vje013/darwin-agentic-cloud</a>
+    <a href="/openapi.json">openapi.json</a>
+    <a href="/docs/swagger">Swagger UI</a>
+  </div>
+  <div class="schema-uri" id="schema-uri">schema: loading…</div>
+</footer>
+
+<script>
+const ROOT = window.location.origin;
+
+async function loadIdentity() {
+  try {
+    const r = await fetch(`${ROOT}/v0/identity`);
+    if (!r.ok) throw new Error(r.statusText);
+    const data = await r.json();
+    document.querySelector('#key-chip').innerHTML =
+      `key: <span style="color:var(--md-sys-color-on-surface)">${data.key_id}</span>`;
+    document.querySelector('#substrate-chip').innerHTML =
+      `substrate: <span style="color:var(--md-sys-color-on-surface)">${data.substrate_id}</span>`;
+    document.querySelector('#schema-uri').textContent = `schema: ${data.schema}`;
+    document.querySelector('#version-tag').textContent = `v${data.version}`;
+  } catch (e) {
+    document.querySelector('#status-chip').textContent = 'Offline';
+    document.querySelector('#status-chip').style.color = 'var(--brand-amber)';
+  }
+}
+
+const METHOD_CLASS = {
+  GET: 'method-get',
+  POST: 'method-post',
+  DELETE: 'method-delete',
+  PUT: 'method-post',
+  PATCH: 'method-post',
+};
+
+function endpointCard(method, path, summary, description) {
+  const id = `endpoint-${method}-${path.replace(/[^a-zA-Z0-9]/g, '-')}`;
+  const safeMethod = method.toUpperCase();
+  const cls = METHOD_CLASS[safeMethod] || 'method-get';
+
+  const card = document.createElement('div');
+  card.className = 'endpoint';
+  card.id = id;
+  card.innerHTML = `
+    <div class="endpoint-header">
+      <span class="method ${cls}">${safeMethod}</span>
+      <span class="path">${path}</span>
+      <span class="summary">${summary || ''}</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="endpoint-body">
+      <div class="endpoint-description">${description || summary || 'No description.'}</div>
+      ${safeMethod === 'GET' && !path.includes('{') ? `
+        <div class="try-section">
+          <div class="try-label">Try it</div>
+          <button class="try-button" data-method="${safeMethod}" data-path="${path}">Send request</button>
+          <div class="try-output"></div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  // Toggle open
+  card.querySelector('.endpoint-header').addEventListener('click', () => {
+    card.classList.toggle('open');
+  });
+
+  // Try-it button
+  const btn = card.querySelector('.try-button');
+  if (btn) {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const out = card.querySelector('.try-output');
+      out.className = 'try-output visible';
+      out.textContent = 'Sending…';
+      try {
+        const r = await fetch(`${ROOT}${path}`);
+        const text = await r.text();
+        let pretty = text;
+        try {
+          pretty = JSON.stringify(JSON.parse(text), null, 2);
+        } catch (_) {}
+        out.textContent = `HTTP ${r.status} ${r.statusText}\n\n${pretty}`;
+        out.classList.add(r.ok ? 'success' : 'error');
+      } catch (err) {
+        out.textContent = `Network error: ${err.message}`;
+        out.classList.add('error');
+      }
+    });
+  }
+
+  return card;
+}
+
+async function loadEndpoints() {
+  try {
+    const r = await fetch(`${ROOT}/openapi.json`);
+    const spec = await r.json();
+    const container = document.querySelector('#endpoints');
+    container.innerHTML = '';
+
+    const entries = [];
+    for (const [path, methods] of Object.entries(spec.paths || {})) {
+      for (const [method, op] of Object.entries(methods)) {
+        if (!['get', 'post', 'put', 'delete', 'patch'].includes(method)) continue;
+        entries.push({
+          path,
+          method,
+          summary: op.summary || '',
+          description: op.description || '',
+          tags: op.tags || ['default'],
+        });
+      }
+    }
+
+    // Sort: identity first, run second, attestations third, health last
+    const order = ['identity', 'run', 'attestations', 'health'];
+    entries.sort((a, b) => {
+      const ai = order.indexOf((a.tags[0] || '').toLowerCase());
+      const bi = order.indexOf((b.tags[0] || '').toLowerCase());
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+
+    for (const e of entries) {
+      container.appendChild(endpointCard(e.method, e.path, e.summary, e.description));
+    }
+  } catch (e) {
+    document.querySelector('#endpoints').innerHTML =
+      `<div class="endpoint"><div class="endpoint-header"><span style="color:var(--brand-amber)">Could not load OpenAPI spec: ${e.message}</span></div></div>`;
+  }
+}
+
+loadIdentity();
+loadEndpoints();
+</script>
+
+</body>
+</html>
