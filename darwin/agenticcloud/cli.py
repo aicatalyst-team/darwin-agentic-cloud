@@ -330,3 +330,133 @@ def mcp_serve() -> None:
 
 if __name__ == "__main__":
     app()
+
+
+@mcp_app.command("install")
+def mcp_install(
+    client: Annotated[str, typer.Option("--client", help="MCP client: 'claude-desktop' or 'cursor'.")] = "claude-desktop",
+    name: Annotated[str, typer.Option("--name", help="Server entry name in the config.")] = "darwin",
+    force: Annotated[bool, typer.Option("--force", help="Overwrite an existing entry without prompting.")] = False,
+) -> None:
+    """Install darwin.agenticcloud as an MCP server in a supported client.
+
+    Detects the client's config file, adds an entry that spawns
+    `python -m darwin.agenticcloud.mcp_server` using the current
+    Python interpreter, and writes the config back. Idempotent.
+    """
+    import os
+    import platform
+    import sys
+    from pathlib import Path
+
+    home = Path.home()
+    system = platform.system()
+
+    if client == "claude-desktop":
+        if system == "Darwin":
+            config_path = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        elif system == "Windows":
+            appdata = os.environ.get("APPDATA")
+            if not appdata:
+                err_console.print("[red]APPDATA env var not set; can't locate Claude config.[/red]")
+                raise typer.Exit(code=2)
+            config_path = Path(appdata) / "Claude" / "claude_desktop_config.json"
+        elif system == "Linux":
+            config_path = home / ".config" / "Claude" / "claude_desktop_config.json"
+        else:
+            err_console.print(f"[red]Unsupported OS for claude-desktop:[/red] {system}")
+            raise typer.Exit(code=2)
+    elif client == "cursor":
+        config_path = home / ".cursor" / "mcp.json"
+    else:
+        err_console.print(f"[red]Unknown client:[/red] {client}")
+        raise typer.Exit(code=2)
+
+    # Load existing config (or create empty)
+    if config_path.exists():
+        try:
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            err_console.print(f"[red]Config file exists but is invalid JSON:[/red] {e}")
+            raise typer.Exit(code=2) from e
+    else:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config = {}
+
+    config.setdefault("mcpServers", {})
+
+    if name in config["mcpServers"] and not force:
+        existing = config["mcpServers"][name]
+        if existing.get("command") == sys.executable and existing.get("args") == ["-m", "darwin.agenticcloud.mcp_server"]:
+            console.print(f"[green]✓ {name} already installed in {client} (no changes).[/green]")
+            console.print(f"  config: {config_path}")
+            console.print(f"  python: {sys.executable}")
+            raise typer.Exit(code=0)
+        else:
+            err_console.print(f"[yellow]Entry '{name}' already exists in {config_path}:[/yellow]")
+            err_console.print(f"  {json.dumps(existing, indent=2)}")
+            err_console.print("Use --force to overwrite, or pick a different --name.")
+            raise typer.Exit(code=1)
+
+    config["mcpServers"][name] = {
+        "command": sys.executable,
+        "args": ["-m", "darwin.agenticcloud.mcp_server"],
+    }
+
+    config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+    console.print(f"[green]✓ Installed darwin.agenticcloud as MCP server '{name}' in {client}.[/green]")
+    console.print(f"  config:  {config_path}")
+    console.print(f"  command: {sys.executable}")
+    console.print(f"  args:    -m darwin.agenticcloud.mcp_server")
+    console.print()
+    console.print("[dim]Restart your MCP client to pick up the change.[/dim]")
+
+
+@mcp_app.command("uninstall")
+def mcp_uninstall(
+    client: Annotated[str, typer.Option("--client", help="MCP client: 'claude-desktop' or 'cursor'.")] = "claude-desktop",
+    name: Annotated[str, typer.Option("--name", help="Server entry name to remove.")] = "darwin",
+) -> None:
+    """Remove an MCP server entry from the client config."""
+    import os
+    import platform
+    from pathlib import Path
+
+    home = Path.home()
+    system = platform.system()
+
+    if client == "claude-desktop":
+        if system == "Darwin":
+            config_path = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        elif system == "Windows":
+            appdata = os.environ.get("APPDATA")
+            if not appdata:
+                err_console.print("[red]APPDATA env var not set.[/red]")
+                raise typer.Exit(code=2)
+            config_path = Path(appdata) / "Claude" / "claude_desktop_config.json"
+        elif system == "Linux":
+            config_path = home / ".config" / "Claude" / "claude_desktop_config.json"
+        else:
+            err_console.print(f"[red]Unsupported OS for claude-desktop:[/red] {system}")
+            raise typer.Exit(code=2)
+    elif client == "cursor":
+        config_path = home / ".cursor" / "mcp.json"
+    else:
+        err_console.print(f"[red]Unknown client:[/red] {client}")
+        raise typer.Exit(code=2)
+
+    if not config_path.exists():
+        console.print(f"[dim]No config file at {config_path} (nothing to remove).[/dim]")
+        raise typer.Exit(code=0)
+
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    if "mcpServers" not in config or name not in config["mcpServers"]:
+        console.print(f"[dim]Entry '{name}' not found in {config_path} (nothing to remove).[/dim]")
+        raise typer.Exit(code=0)
+
+    del config["mcpServers"][name]
+    config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+    console.print(f"[green]✓ Removed MCP server '{name}' from {client}.[/green]")
+    console.print(f"  config: {config_path}")
