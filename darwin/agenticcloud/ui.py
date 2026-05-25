@@ -15,9 +15,8 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from rich.align import Align
 from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
@@ -44,6 +43,7 @@ BANNER = r"""██████╗  █████╗ ██████╗ █
 # -------------------------------------------------------------------
 # Banner
 # -------------------------------------------------------------------
+
 
 def render_banner(
     version: str,
@@ -95,6 +95,7 @@ def print_banner(
 # Matrix boot sequence
 # -------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class BootStep:
     label: str
@@ -131,6 +132,7 @@ def matrix_boot(
 # -------------------------------------------------------------------
 # Single-line progressive ticker
 # -------------------------------------------------------------------
+
 
 class StepLine:
     """One line that updates in-place, then renders final state.
@@ -209,6 +211,7 @@ class StepLine:
 # -------------------------------------------------------------------
 # Attestation panel
 # -------------------------------------------------------------------
+
 
 def render_attestation_panel(
     workload_hash: str,
@@ -292,7 +295,7 @@ def render_attestation_panel(
 
     return Panel(
         body,
-        title=f"[bold]attestation · darwin.agenticcloud[/bold]",
+        title="[bold]attestation · darwin.agenticcloud[/bold]",
         subtitle=subtitle,
         border_style=BRAND_GREEN,
         padding=(1, 2),
@@ -308,7 +311,6 @@ def _short_hash(h: str) -> str:
     if len(body) <= 16:
         return f"{prefix}:{body}"
     return f"{prefix}:{body[:8]}...{body[-4:]}"
-
 
 
 def _fmt_cost(usd: float) -> str:
@@ -334,7 +336,7 @@ def _short_id(att_id: str) -> str:
 
 def _fmt_timestamp(unix_ts: float) -> str:
     """Unix timestamp → ISO 8601 UTC string."""
-    return datetime.fromtimestamp(unix_ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.fromtimestamp(unix_ts, tz=UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _fmt_fingerprint(public_key_b64: str) -> str:
@@ -346,7 +348,6 @@ def _fmt_fingerprint(public_key_b64: str) -> str:
     return f"ed25519:{digest[:13]}...{digest[-4:]}"
 
 
-
 def signature_animation(console: Console, frames: float = 0.4) -> None:
     """Frame-by-frame signing animation, shown only on TTY.
 
@@ -356,7 +357,7 @@ def signature_animation(console: Console, frames: float = 0.4) -> None:
     """
     if not (console.is_terminal and not console.is_jupyter):
         return
-    spinner_chars = ["╱", "─", "╲", "│"]
+    spinner_chars = ["╱", "─", "╲", "│"]  # noqa: RUF001
     n = int(frames / 0.06)
     for i in range(n):
         char = spinner_chars[i % len(spinner_chars)]
@@ -381,14 +382,13 @@ def signature_animation(console: Console, frames: float = 0.4) -> None:
 # Configuration receipt (used by `darwin mcp install`)
 # -------------------------------------------------------------------
 
+
 def render_mcp_install_receipt(
     config_path: str,
     server_name: str,
     python_interpreter: str,
     tool_names: list[str],
-    sample_prompt: str = (
-        '"use dac_run_python to compute 2+2 and show me the signer key id"'
-    ),
+    sample_prompt: str = ('"use dac_run_python to compute 2+2 and show me the signer key id"'),
 ) -> Group:
     """The configuration receipt shown after a successful `darwin mcp install`."""
     parts: list = []

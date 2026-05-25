@@ -19,10 +19,10 @@ from rich.console import Console
 
 from darwin.agenticcloud import ui
 
-
 # -------------------------------------------------------------------
 # Helpers
 # -------------------------------------------------------------------
+
 
 def capture(console_kwargs: dict | None = None) -> tuple[Console, io.StringIO]:
     """Return a Rich Console writing into a StringIO, plus the buffer."""
@@ -38,8 +38,8 @@ def capture(console_kwargs: dict | None = None) -> tuple[Console, io.StringIO]:
 # Banner
 # -------------------------------------------------------------------
 
-class TestBanner:
 
+class TestBanner:
     def test_banner_renders_without_signer(self) -> None:
         console, buf = capture()
         ui.print_banner(console, "0.1.1", "darwin.cloud/agenticcloud/attestation/v0.1")
@@ -70,6 +70,7 @@ class TestBanner:
     def test_banner_is_group_not_text(self) -> None:
         # Returning Group preserves multi-style composition.
         from rich.console import Group
+
         result = ui.render_banner("0.1.1", "schema/v0.1", "key", "sub")
         assert isinstance(result, Group)
 
@@ -78,8 +79,8 @@ class TestBanner:
 # Matrix boot
 # -------------------------------------------------------------------
 
-class TestMatrixBoot:
 
+class TestMatrixBoot:
     def test_matrix_boot_renders_all_steps(self) -> None:
         console, buf = capture()
         steps = [
@@ -109,8 +110,8 @@ class TestMatrixBoot:
 # StepLine progress ticker
 # -------------------------------------------------------------------
 
-class TestStepLine:
 
+class TestStepLine:
     def test_stepline_non_tty_prints_each_tick(self) -> None:
         # Non-TTY path: each tick is its own line.
         console, buf = capture()
@@ -137,8 +138,8 @@ class TestStepLine:
 # Attestation panel
 # -------------------------------------------------------------------
 
-class TestAttestationPanel:
 
+class TestAttestationPanel:
     def test_attestation_panel_renders_all_fields(self) -> None:
         console, buf = capture()
         panel = ui.render_attestation_panel(
@@ -191,12 +192,13 @@ class TestAttestationPanel:
 # Signature animation
 # -------------------------------------------------------------------
 
-class TestSignatureAnimation:
 
+class TestSignatureAnimation:
     def test_signature_animation_skips_on_non_tty(self) -> None:
         # When force_terminal=False, animation should not block.
         # Verifies the function returns quickly.
         import time
+
         console, _ = capture()
         start = time.time()
         ui.signature_animation(console, frames=1.0)
@@ -209,8 +211,8 @@ class TestSignatureAnimation:
 # MCP install receipt
 # -------------------------------------------------------------------
 
-class TestMcpInstallReceipt:
 
+class TestMcpInstallReceipt:
     def test_mcp_receipt_renders_all_components(self) -> None:
         console, buf = capture()
         receipt = ui.render_mcp_install_receipt(
@@ -251,8 +253,8 @@ class TestMcpInstallReceipt:
 # Brand color constants
 # -------------------------------------------------------------------
 
-class TestBrandConstants:
 
+class TestBrandConstants:
     def test_brand_colors_are_valid_hex(self) -> None:
         for name in ("BRAND_GREEN", "BRAND_AMBER", "BRAND_DIM"):
             color = getattr(ui, name)
