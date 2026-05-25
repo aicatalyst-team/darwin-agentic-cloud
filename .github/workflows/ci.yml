@@ -107,7 +107,15 @@ jobs:
         run: uv sync --extra dev --extra test
 
       - name: Run integration tests
-        run: uv run pytest -m integration -v
+        run: |
+          set +e
+          uv run pytest -m integration -v
+          code=$?
+          if [ $code -eq 5 ]; then
+            echo "::notice::No integration tests defined yet — treating as success."
+            exit 0
+          fi
+          exit $code
         timeout-minutes: 10
 
   # ---------------------------------------------------------------
