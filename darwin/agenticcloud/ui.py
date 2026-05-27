@@ -449,132 +449,177 @@ def render_mcp_install_receipt(
 
 
 def render_v02_attestation_panel(attestation: dict) -> Panel:
-    """Branded panel for v0.2 attestations.
+    """Engraved-certificate renderer for v0.2 attestations.
 
-    Adds a fourth `substrate` block to the v0.1 layout, rendering the
-    polymorphic substrate object: id, version, identity-signer key id
-    and type, evidence schema id, TEE marker, and evidence fields.
-
-    Visual style preserved from v0.1 — three columns, hash truncation,
-    brand colors, the verification line at the bottom.
+    Aesthetic: pre-1970s stock certificate, USPS certified mail,
+    Pony Express station stamps. Full-center alignment, double-line
+    borders, diamond dividers, gold seal markers.
     """
+    from rich.align import Align
+    from rich.box import DOUBLE_EDGE
+    from rich.console import Group
+
+    GOLD = "#ffb86c"
+    SEPIA = "#d4a574"
+    DIAMOND = " ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ "
+    MOTTO = "✦ SECURITAS · STABILITAS · SIGNUM ✦"
+
     exec_result = attestation.get("execution_result", {})
     substrate = exec_result.get("substrate", {})
     evidence = substrate.get("evidence", {})
+    vas = attestation.get("value_added_service") or {}
 
-    body = Text()
+    parts: list = []
+
+    # --- Motto + Certificate No. ---
+    parts.append(Align.center(Text(MOTTO, style="bold " + GOLD)))
+    parts.append(Text(""))
+    cert_no = attestation.get("attestation_id", "").upper().removeprefix("ATT_")
+    cert_line = Text()
+    cert_line.append("CERTIFICATE No. ", style="bold " + GOLD)
+    cert_line.append(cert_no, style="bold white")
+    parts.append(Align.center(cert_line))
+    parts.append(Text(""))
 
     # --- Identity block ---
-    body.append("id           ", style=BRAND_DIM)
-    body.append(_short_id(attestation.get("attestation_id", "")), style="white")
-    body.append("\n")
-    body.append("issued       ", style=BRAND_DIM)
-    body.append(attestation.get("issued_at", ""), style="white")
-    body.append("\n")
-    body.append("\n")
+    for label, value in [
+        ("issued", attestation.get("issued_at", "")),
+        ("workload", _short_hash(attestation.get("workload_spec_hash", ""))),
+        ("output", _short_hash(exec_result.get("output_hash", ""))),
+        ("cost", "$" + _fmt_cost(exec_result.get("cost_usd", 0.0))),
+    ]:
+        line = Text()
+        line.append(label + "  ", style=BRAND_DIM)
+        line.append(value, style="white")
+        parts.append(Align.center(line))
+    parts.append(Text(""))
+    parts.append(Align.center(Text(DIAMOND, style=GOLD)))
+    parts.append(Text(""))
 
-    # --- Execution block ---
-    body.append("workload     ", style=BRAND_DIM)
-    body.append(_short_hash(attestation.get("workload_spec_hash", "")), style="white")
-    body.append("\n")
-    body.append("output       ", style=BRAND_DIM)
-    body.append(_short_hash(exec_result.get("output_hash", "")), style="white")
-    body.append("\n")
-    body.append("cost         ", style=BRAND_DIM)
-    body.append(f"${_fmt_cost(exec_result.get('cost_usd', 0.0))}", style="white")
-    body.append("\n")
-    body.append("\n")
+    # --- Substrate block ---
+    for label, value, vstyle in [
+        ("substrate", substrate.get("id", "?"), BRAND_AMBER),
+        ("schema", substrate.get("evidence_schema_id", "?"), BRAND_AMBER),
+        ("sub-signer", substrate.get("identity_signer_key_id", "?"), BRAND_GREEN),
+    ]:
+        line = Text()
+        line.append(label + "  ", style=BRAND_DIM)
+        line.append(value, style=vstyle)
+        parts.append(Align.center(line))
+    parts.append(Text(""))
 
-    # --- Substrate block (NEW for v0.2) ---
-    body.append("substrate    ", style=BRAND_DIM)
-    body.append(substrate.get("id", "?"), style=BRAND_AMBER)
-    body.append("  ", style=BRAND_DIM)
-    body.append(f"v{substrate.get('version', '?')}", style=BRAND_DIM)
-    body.append("\n")
-    body.append("schema       ", style=BRAND_DIM)
-    body.append(substrate.get("evidence_schema_id", "?"), style=BRAND_AMBER)
-    body.append("\n")
-
-    # Substrate identity signer
-    sig_type = substrate.get("identity_signer_type", "?")
-    if sig_type == "darwin-class-key":
-        sig_style = f"bold {BRAND_GREEN}"
-    elif sig_type == "operator-fallback":
-        sig_style = BRAND_AMBER
-    else:
-        sig_style = BRAND_DIM
-    body.append("sub-signer   ", style=BRAND_DIM)
-    body.append(substrate.get("identity_signer_key_id", "?"), style=BRAND_GREEN)
-    body.append("  ", style=BRAND_DIM)
-    body.append(f"[{sig_type}]", style=sig_style)
-    body.append("\n")
-
-    # TEE marker (only displayed when meaningful — true or extensions present)
-    tee = substrate.get("tee_required", False)
-    extensions = substrate.get("extensions", {}) or {}
-    if tee:
-        body.append("tee          ", style=BRAND_DIM)
-        body.append("required", style=f"bold {BRAND_AMBER}")
-        body.append("\n")
-    if extensions:
-        body.append("extensions   ", style=BRAND_DIM)
-        body.append(", ".join(sorted(extensions.keys())), style=BRAND_DIM)
-        body.append("\n")
-    body.append("\n")
-
-    # --- Evidence rows ---
-    body.append("evidence", style=BRAND_DIM)
-    body.append("\n")
-    # Dynamic column width: pad keys to longest-key + 2 so values always
-    # have a visible gap regardless of which substrate the evidence is from.
+    # --- Evidence ---
     if evidence:
-        key_width = max(len(k) for k in evidence) + 2
-    else:
-        key_width = 24
-    for key in sorted(evidence.keys()):
-        val = evidence[key]
-        body.append(f"  {key:<{key_width}}", style=BRAND_DIM)
-        body.append(_fmt_evidence_value(key, val), style="white")
-        body.append("\n")
-    body.append("\n")
+        parts.append(Align.center(Text("evidence", style=BRAND_DIM)))
+        for key in sorted(evidence.keys()):
+            val = evidence[key]
+            line = Text()
+            line.append(key + "  ", style=BRAND_DIM)
+            line.append(_fmt_evidence_value(key, val), style="white")
+            parts.append(Align.center(line))
+        parts.append(Text(""))
 
-    # --- Cryptography / outer signature ---
+    # --- Value-Added Service block ---
+    if vas:
+        parts.append(Align.center(Text("value-added", style=BRAND_DIM)))
+        cce = vas.get("cost_cap_enforcement") or {}
+        if cce:
+            within = bool(cce.get("within_cap", False))
+            marker = "✓" if within else "⚠"
+            mstyle = "bold " + (GOLD if within else BRAND_AMBER)
+            line = Text()
+            line.append(marker + "  ", style=mstyle)
+            line.append("cost cap  ", style="white")
+            line.append("$" + _fmt_cost(float(cce.get("actual_usd", 0.0))), style="white")
+            line.append(" / ", style=BRAND_DIM)
+            line.append("$" + _fmt_cost(float(cce.get("cap_usd", 0.0))), style=BRAND_DIM)
+            parts.append(Align.center(line))
+        rd = vas.get("routing_decision") or {}
+        if rd:
+            considered = rd.get("candidates_considered", 0)
+            line = Text()
+            line.append("→  ", style="bold " + GOLD)
+            line.append("routed  ", style="white")
+            line.append(rd.get("policy", "?"), style=BRAND_AMBER)
+            line.append(" (1 picked from " + str(considered) + " eligible)", style=BRAND_DIM)
+            parts.append(Align.center(line))
+        ids = vas.get("identity_signing") or {}
+        if ids:
+            line = Text()
+            line.append("✓  ", style="bold " + GOLD)
+            line.append("identity  ", style="white")
+            line.append("anchored to public keylist", style=BRAND_DIM)
+            parts.append(Align.center(line))
+        parts.append(Text(""))
+
+    parts.append(Align.center(Text(DIAMOND, style=GOLD)))
+    parts.append(Text(""))
+
+    # --- Signed block ---
     outer_signer_key = attestation.get("signer_key_id")
-    body.append("signer       ", style=BRAND_DIM)
     if outer_signer_key:
-        body.append(outer_signer_key, style=BRAND_GREEN)
+        parts.append(Align.center(Text("✓ ATTESTATION SIGNED", style="bold " + GOLD)))
+        by_line = Text()
+        by_line.append("by  ", style=BRAND_DIM)
+        by_line.append(outer_signer_key, style=BRAND_GREEN)
+        parts.append(Align.center(by_line))
+        sch_line = Text()
+        sch_line.append("schema  ", style=BRAND_DIM)
+        sch_line.append(
+            attestation.get("schema", "darwin.cloud/agenticcloud/attestation/v0.2"),
+            style=BRAND_AMBER,
+        )
+        parts.append(Align.center(sch_line))
     else:
-        body.append("(unsigned)", style=BRAND_DIM)
-    body.append("\n")
-    body.append("\n")
+        parts.append(
+            Align.center(Text("⚠ substrate signed; outer signature pending", style=BRAND_AMBER))
+        )
+    parts.append(Text(""))
 
-    # --- Verification line ---
-    if outer_signer_key:
-        body.append("✓ ", style=f"bold {BRAND_GREEN}")
-        body.append("attestation signed", style="white")
-    else:
-        body.append("⚠ ", style=f"bold {BRAND_AMBER}")
-        body.append("substrate signed; outer signature pending", style=BRAND_AMBER)
-    body.append("\n")
-    body.append("schema       ", style=BRAND_DIM)
-    body.append(
-        attestation.get("schema", "darwin.cloud/agenticcloud/attestation/v0.2"),
-        style=BRAND_AMBER,
+    # --- Verify instructions ---
+    parts.append(Align.center(Text("verify", style=BRAND_DIM)))
+    parts.append(
+        Align.center(
+            Text(
+                "1. curl darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json",
+                style=SEPIA,
+            )
+        )
+    )
+    parts.append(
+        Align.center(
+            Text(
+                "2. confirm sub-signer public key is present and active",
+                style=SEPIA,
+            )
+        )
+    )
+    parts.append(
+        Align.center(
+            Text(
+                "3. check identity_signature against the signed payload",
+                style=SEPIA,
+            )
+        )
     )
 
-    # Subtitle shows SCHEMA version (v0.2.0), not substrate adapter version.
-    version_str = "0.2.0"
     subtitle = (
-        f"[dim]darwin.cloud — verifiable compute for AI agents[/dim]"
-        f"   [{BRAND_AMBER}]v{version_str}[/{BRAND_AMBER}]"
+        "[dim]darwin.cloud  ·  verifiable compute for AI agents  ·  v0.2.0[/dim]"
+        "   [" + GOLD + "]✦[/" + GOLD + "]"
     )
-
+    title = (
+        "[" + GOLD + "]✦[/" + GOLD + "]  "
+        "[bold " + GOLD + "]ATTESTATION OF EXECUTION[/bold " + GOLD + "]  "
+        "[dim]·[/dim]  [bold]darwin.agenticcloud[/bold]  "
+        "[" + GOLD + "]✦[/" + GOLD + "]"
+    )
     return Panel(
-        body,
-        title="[bold]attestation · darwin.agenticcloud[/bold]",
+        Group(*parts),
+        title=title,
         subtitle=subtitle,
         border_style=BRAND_GREEN,
-        padding=(1, 2),
+        box=DOUBLE_EDGE,
+        padding=(1, 3),
     )
 
 
