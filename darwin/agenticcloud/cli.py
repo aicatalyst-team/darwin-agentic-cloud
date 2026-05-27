@@ -58,8 +58,165 @@ err_console = Console(stderr=True)
 # -------------------------------------------------------------------
 # Top-level commands
 # -------------------------------------------------------------------
+
+# -------------------------------------------------------------------
+# v0.2 headline command
+# -------------------------------------------------------------------
+
+
 @app.command()
 def run(
+    workload: Annotated[
+        str,
+        typer.Argument(
+            help="Code string or path to a script file. "
+            "If the argument exists as a file path, it is read; "
+            "otherwise it is executed inline.",
+        ),
+    ],
+    substrate: Annotated[
+        str | None,
+        typer.Option(
+            "--substrate",
+            "-s",
+            help="Substrate to use (short name like 'aws-batch' or full ID). "
+            "Omit for auto-routing (cheapest available).",
+        ),
+    ] = None,
+    language: Annotated[
+        str, typer.Option("--language", "-l", help="Workload language.")
+    ] = "python",
+    cost_cap: Annotated[
+        float,
+        typer.Option("--cost-cap", help="Cost ceiling in USD."),
+    ] = 0.10,
+    timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds.")] = 30,
+    memory: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB.")] = 512,
+    save: Annotated[
+        Path | None,
+        typer.Option("--save", help="Write the signed v0.2 attestation JSON to this path."),
+    ] = None,
+    json_only: Annotated[
+        bool,
+        typer.Option("--json", help="Print only the signed attestation JSON (no cert panel)."),
+    ] = False,
+) -> None:
+    """Execute a workload and emit a signed v0.2 attestation receipt.
+
+    Default behavior auto-routes to the cheapest available substrate.
+    Override with --substrate to pick a specific one.
+
+    Examples:
+
+        darwin run "print('hi')"
+        darwin run hello.py
+        darwin run hello.py --substrate aws-batch
+        darwin run hello.py --cost-cap 1.0 --timeout 300
+    """
+    # Resolve workload arg: file path if it exists, else literal code.
+    candidate = Path(workload)
+    if candidate.exists() and candidate.is_file():
+        code = candidate.read_text(encoding="utf-8")
+        source_label = candidate.name
+    else:
+        code = workload
+        source_label = "<inline>"
+
+    from darwin import run as _darwin_run
+
+    if json_only:
+        attestation = _darwin_run(
+            code,
+            substrate=substrate,
+            language=language,
+            cost_cap=cost_cap,
+            timeout=timeout,
+            memory_mb=memory,
+        )
+    else:
+        from darwin.agenticcloud.ui import StepLine, signature_animation
+
+        with StepLine(console, f"darwin.agenticcloud · running {source_label}") as step:
+            step.tick("discover")
+            step.tick("route")
+            step.tick("execute")
+            attestation = _darwin_run(
+                code,
+                substrate=substrate,
+                language=language,
+                cost_cap=cost_cap,
+                timeout=timeout,
+                memory_mb=memory,
+            )
+            step.tick("attest")
+            signature_animation(console, frames=0.4)
+            step.tick("sign")
+
+    if save is not None:
+        save.write_text(json.dumps(attestation, indent=2), encoding="utf-8")
+
+    if json_only:
+        print(json.dumps(attestation, indent=2))
+        return
+
+    # Cert panel
+    from darwin.agenticcloud.ui import render_attestation_panel_auto
+
+    console.print()
+    console.print(render_attestation_panel_auto(attestation))
+    console.print()
+
+    # Echo workload stdout / stderr so users see their output
+    result = attestation.get("execution_result", {})
+    if result.get("stdout"):
+        console.print(
+            result["stdout"],
+            end="" if result["stdout"].endswith("\n") else "\n",
+        )
+    if result.get("stderr"):
+        err_console.print(
+            result["stderr"],
+            end="" if result["stderr"].endswith("\n") else "\n",
+        )
+
+    if save is not None:
+        console.print(f"[dim]signed attestation saved to[/dim] {save}")
+
+
+@attest_app.command("run-v01")
+def attest_run_v01(
+    file: Annotated[Path, typer.Argument(help="Path to the script to run.")],
+    language: Annotated[
+        str, typer.Option("--language", "-l", help="Language (python or node).")
+    ] = "python",
+    timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds.")] = 30,
+    memory: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB.")] = 512,
+    cost_cap: Annotated[float, typer.Option("--cost-cap", help="Cost ceiling in USD.")] = 0.01,
+    save: Annotated[
+        Path | None,
+        typer.Option("--save", help="Write the signed attestation to this path."),
+    ] = None,
+    json_only: Annotated[
+        bool, typer.Option("--json", help="Print only the signed attestation JSON.")
+    ] = False,
+) -> None:
+    """Legacy v0.1 attestation runner — execute a script, emit a v0.1 signed attestation.
+
+    Kept for backward compatibility. New workloads should use `darwin run`, which
+    produces v0.2 attestations with the VAS block and cert-style receipt.
+    """
+    _run_v01_impl(
+        file=file,
+        language=language,
+        timeout=timeout,
+        memory=memory,
+        cost_cap=cost_cap,
+        save=save,
+        json_only=json_only,
+    )
+
+
+def _run_v01_impl(
     file: Annotated[Path, typer.Argument(help="Path to the script to run.")],
     language: Annotated[
         str, typer.Option("--language", "-l", help="Language (python or node).")
@@ -186,6 +343,462 @@ def _print_execution(signed_dict: dict, saved_to: Path | None) -> None:
 
     if saved_to is not None:
         console.print(f"[dim]Signed attestation saved to[/dim] {saved_to}")
+
+
+# -------------------------------------------------------------------
+# v0.2 verbs: verify, price, list, sign, try, who
+# -------------------------------------------------------------------
+
+
+@app.command()
+def verify(
+    attestation_file: Annotated[
+        Path,
+        typer.Argument(
+            help="Path to a v0.2 attestation JSON file to verify.",
+        ),
+    ],
+    keylist: Annotated[
+        str,
+        typer.Option(
+            "--keylist",
+            help="Override the keylist URL (default: production darwin.cloud keylist).",
+        ),
+    ] = "https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json",
+    json_only: Annotated[
+        bool,
+        typer.Option("--json", help="Print verification result as JSON."),
+    ] = False,
+) -> None:
+    """Verify a v0.2 attestation cryptographically.
+
+    Fetches the public keylist, verifies the substrate identity signature
+    against the published class key, and re-renders the attestation panel
+    with verification status.
+    """
+    import urllib.request
+
+    from darwin.agenticcloud.hashing import canonical_json
+    from darwin.agenticcloud.signing import verify_signature
+    from darwin.agenticcloud.substrate.base import build_identity_payload
+    from darwin.agenticcloud.ui import render_attestation_panel_auto
+
+    if not attestation_file.exists():
+        err_console.print(f"[red]File not found:[/red] {attestation_file}")
+        raise typer.Exit(code=2)
+
+    try:
+        attestation = json.loads(attestation_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        err_console.print(f"[red]Invalid JSON:[/red] {e}")
+        raise typer.Exit(code=2) from e
+
+    # Fetch the keylist
+    try:
+        with urllib.request.urlopen(keylist, timeout=10) as resp:
+            keylist_data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        err_console.print(f"[red]Failed to fetch keylist {keylist}:[/red] {e}")
+        raise typer.Exit(code=3) from e
+
+    # Find the substrate identity key
+    substrate_block = attestation.get("execution_result", {}).get("substrate", {})
+    target_signer_key_id = substrate_block.get("identity_signer_key_id")
+    if not target_signer_key_id:
+        err_console.print("[red]No identity_signer_key_id in attestation[/red]")
+        raise typer.Exit(code=4)
+
+    matching_key = None
+    for k in keylist_data.get("keys", []):
+        if k.get("signer_key_id") == target_signer_key_id:
+            matching_key = k
+            break
+
+    if matching_key is None:
+        err_console.print(
+            f"[red]Key {target_signer_key_id} not in keylist[/red] "
+            f"(have {len(keylist_data.get('keys', []))} keys)"
+        )
+        raise typer.Exit(code=5)
+
+    # Reconstruct the signed payload and verify
+    identity_payload = build_identity_payload(
+        substrate_id=substrate_block.get("id", ""),
+        substrate_version=substrate_block.get("version", ""),
+        workload_spec_hash=attestation.get("workload_spec_hash", ""),
+        output_hash=attestation.get("execution_result", {}).get("output_hash", ""),
+        evidence_schema_id=substrate_block.get("evidence_schema_id", ""),
+        issued_at=attestation.get("issued_at", ""),
+    )
+    canonical = canonical_json(identity_payload)
+    sig_b64 = substrate_block.get("identity_signature", "")
+    pub_b64 = matching_key.get("public_key_b64", "")
+
+    verified = verify_signature(canonical, sig_b64, pub_b64)
+
+    result_dict = {
+        "verified": verified,
+        "signer_key_id": target_signer_key_id,
+        "signer_status": matching_key.get("status", "unknown"),
+        "keylist_url": keylist,
+        "attestation_id": attestation.get("attestation_id"),
+    }
+
+    if json_only:
+        print(json.dumps(result_dict, indent=2))
+        return
+
+    console.print()
+    console.print(render_attestation_panel_auto(attestation))
+    console.print()
+    if verified:
+        console.print(
+            f"[bold green]✓ identity signature verified[/bold green] "
+            f"against keylist key [{matching_key.get('status', '?')}]"
+        )
+    else:
+        console.print(
+            "[bold red]✗ identity signature FAILED to verify[/bold red] against published key"
+        )
+        raise typer.Exit(code=10)
+
+
+@app.command()
+def price(
+    workload: Annotated[
+        str,
+        typer.Argument(
+            help="Code string or path to a script file.",
+        ),
+    ],
+    substrate: Annotated[
+        str | None,
+        typer.Option(
+            "--substrate",
+            "-s",
+            help="Only price a specific substrate (short name or full ID).",
+        ),
+    ] = None,
+    language: Annotated[
+        str, typer.Option("--language", "-l", help="Workload language.")
+    ] = "python",
+    cost_cap: Annotated[
+        float,
+        typer.Option("--cost-cap", help="Cost ceiling in USD."),
+    ] = 0.10,
+    timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds.")] = 30,
+    memory: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB.")] = 512,
+    json_only: Annotated[
+        bool,
+        typer.Option("--json", help="Print prices as JSON."),
+    ] = False,
+) -> None:
+    """Preflight-only — see what each substrate would cost without running.
+
+    Asks every available substrate for a cost estimate. Returns a sorted
+    list (cheapest first) so you can see your options before committing.
+    """
+    from darwin.agenticcloud.router import discover_substrates, resolve_short_name
+    from darwin.agenticcloud.substrate.base import PreflightRejected
+
+    candidate = Path(workload)
+    if candidate.exists() and candidate.is_file():
+        code = candidate.read_text(encoding="utf-8")
+    else:
+        code = workload
+
+    spec = WorkloadSpec(
+        code=code,
+        language=language,
+        cost_cap_usd=cost_cap,
+        timeout_sec=timeout,
+        memory_mb=memory,
+    )
+
+    substrates = discover_substrates()
+    if not substrates:
+        err_console.print(
+            "[red]No substrates discoverable.[/red] "
+            "Install Docker or set AWS_PROFILE / MODAL_TOKEN_ID."
+        )
+        raise typer.Exit(code=1)
+
+    if substrate is not None:
+        try:
+            substrates = [resolve_short_name(substrate, substrates)]
+        except Exception as e:
+            err_console.print(f"[red]{e}[/red]")
+            raise typer.Exit(code=2) from e
+
+    quotes = []
+    for sub in substrates:
+        try:
+            est = sub.preflight(spec)
+            quotes.append(
+                {
+                    "substrate_id": sub.substrate_id,
+                    "cost_usd_max": float(est.cost_usd_max),
+                    "status": "ok",
+                }
+            )
+        except PreflightRejected as e:
+            quotes.append(
+                {
+                    "substrate_id": sub.substrate_id,
+                    "cost_usd_max": None,
+                    "status": "rejected",
+                    "reason": str(e),
+                }
+            )
+        except Exception as e:
+            quotes.append(
+                {
+                    "substrate_id": sub.substrate_id,
+                    "cost_usd_max": None,
+                    "status": "error",
+                    "reason": f"{type(e).__name__}: {e}",
+                }
+            )
+
+    quotes.sort(key=lambda q: (q["cost_usd_max"] is None, q["cost_usd_max"] or 0.0))
+
+    if json_only:
+        print(json.dumps(quotes, indent=2))
+        return
+
+    table = Table(title="darwin.agenticcloud · price quotes", show_lines=False)
+    table.add_column("substrate", style="bold")
+    table.add_column("cost_usd_max", justify="right")
+    table.add_column("status")
+    for q in quotes:
+        cost_str = f"${q['cost_usd_max']:.6f}" if q["cost_usd_max"] is not None else "—"
+        status_color = (
+            "green" if q["status"] == "ok" else "yellow" if q["status"] == "rejected" else "red"
+        )
+        table.add_row(
+            q["substrate_id"],
+            cost_str,
+            f"[{status_color}]{q['status']}[/{status_color}]",
+        )
+    console.print()
+    console.print(table)
+    console.print()
+
+
+@app.command("list")
+def list_substrates(
+    json_only: Annotated[
+        bool,
+        typer.Option("--json", help="Print as JSON."),
+    ] = False,
+) -> None:
+    """Show every substrate this environment can use right now.
+
+    Auto-discovery checks for credentials, environment variables, and
+    daemon availability (Docker). Substrates that fail any check are
+    omitted with a reason.
+    """
+    from darwin.agenticcloud.router import discover_substrates
+
+    discovered = discover_substrates()
+
+    # Hard-coded UX metadata (cold start, region, type) since the substrate
+    # base class doesn't expose these as a public interface yet.
+    meta = {
+        "local-docker-v0": ("local", "~2s", "no cost"),
+        "aws-lambda-us-east-1": ("aws-east1", "~500ms", "~$0.0001/job"),
+        "aws-lambda-us-west-2": ("aws-west2", "~500ms", "~$0.0001/job"),
+        "aws-lambda-eu-west-1": ("aws-eu", "~500ms", "~$0.0001/job"),
+        "aws-lambda-ap-northeast-1": ("aws-tokyo", "~500ms", "~$0.0001/job"),
+        "modal-v0": ("modal", "~1s", "~$0.0001/job"),
+        "aws-batch-ec2-spot-v0-us-east-1": (
+            "aws-east1",
+            "~3min cold",
+            "$0.001-0.10/job",
+        ),
+    }
+
+    rows = []
+    for sub in discovered:
+        m = meta.get(sub.substrate_id, ("?", "?", "?"))
+        rows.append(
+            {
+                "substrate_id": sub.substrate_id,
+                "region": m[0],
+                "cold_start": m[1],
+                "cost_band": m[2],
+            }
+        )
+
+    if json_only:
+        print(json.dumps(rows, indent=2))
+        return
+
+    table = Table(title="darwin.agenticcloud · available substrates")
+    table.add_column("substrate", style="bold")
+    table.add_column("region")
+    table.add_column("cold start")
+    table.add_column("cost band")
+    for r in rows:
+        table.add_row(r["substrate_id"], r["region"], r["cold_start"], r["cost_band"])
+    console.print()
+    console.print(table)
+    console.print(f"\n[dim]{len(rows)} substrate(s) discovered[/dim]")
+
+
+@app.command()
+def sign(
+    substrate_id: Annotated[
+        str,
+        typer.Argument(
+            help="Substrate ID to mint a class signing key for "
+            "(e.g. 'aws-batch-ec2-spot-v0-us-east-1').",
+        ),
+    ],
+    out: Annotated[
+        Path | None,
+        typer.Option(
+            "--out",
+            help="Output path for the PEM file (default: class-keys/{id}.pem).",
+        ),
+    ] = None,
+) -> None:
+    """Generate a class signing key for a substrate.
+
+    The private key is written to disk; the public key id is printed.
+    Upload the PEM contents as a secret to your hosted signer, then
+    publish the public key in the substrate keylist.
+    """
+    from darwin.agenticcloud.admin_cli import _cmd_generate
+
+    _cmd_generate(substrate_id=substrate_id, out_path=out)
+
+
+@app.command(name="try")
+def try_workload(
+    workload: Annotated[
+        str,
+        typer.Argument(
+            help="Code string or path to a script file.",
+        ),
+    ],
+    language: Annotated[
+        str, typer.Option("--language", "-l", help="Workload language.")
+    ] = "python",
+    cost_cap: Annotated[
+        float,
+        typer.Option("--cost-cap", help="Cost ceiling in USD."),
+    ] = 0.10,
+    timeout: Annotated[int, typer.Option("--timeout", "-t", help="Timeout in seconds.")] = 30,
+    memory: Annotated[int, typer.Option("--memory", "-m", help="Memory limit in MB.")] = 512,
+    save: Annotated[
+        Path | None,
+        typer.Option("--save", help="Write the signed attestation to this path."),
+    ] = None,
+    json_only: Annotated[
+        bool,
+        typer.Option("--json", help="Print only the signed attestation JSON."),
+    ] = False,
+) -> None:
+    """Run on the safest local substrate (local-docker) — never escalates to cloud.
+
+    Use when you want to test a workload without paying any cloud cost.
+    Same output shape as `darwin run`; just locked to local-docker-v0.
+    """
+    # Delegate to `run` with substrate forced to local-docker-v0.
+    run(
+        workload=workload,
+        substrate="local-docker-v0",
+        language=language,
+        cost_cap=cost_cap,
+        timeout=timeout,
+        memory=memory,
+        save=save,
+        json_only=json_only,
+    )
+
+
+@app.command()
+def who(
+    attestation_file: Annotated[
+        Path,
+        typer.Argument(
+            help="Path to a v0.2 attestation JSON file.",
+        ),
+    ],
+    keylist: Annotated[
+        str,
+        typer.Option(
+            "--keylist",
+            help="Keylist URL (default: production darwin.cloud keylist).",
+        ),
+    ] = "https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json",
+    json_only: Annotated[
+        bool,
+        typer.Option("--json", help="Print as JSON."),
+    ] = False,
+) -> None:
+    """Show whose keys signed an attestation.
+
+    Lighter-weight than `verify` — does not run cryptographic verification.
+    Just looks up the substrate identity signer and outer signer in the
+    keylist and reports their status.
+    """
+    import urllib.request
+
+    if not attestation_file.exists():
+        err_console.print(f"[red]File not found:[/red] {attestation_file}")
+        raise typer.Exit(code=2)
+
+    try:
+        attestation = json.loads(attestation_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        err_console.print(f"[red]Invalid JSON:[/red] {e}")
+        raise typer.Exit(code=2) from e
+
+    try:
+        with urllib.request.urlopen(keylist, timeout=10) as resp:
+            keylist_data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        err_console.print(f"[red]Failed to fetch keylist {keylist}:[/red] {e}")
+        raise typer.Exit(code=3) from e
+
+    substrate_block = attestation.get("execution_result", {}).get("substrate", {})
+    sub_signer_id = substrate_block.get("identity_signer_key_id", "?")
+    outer_signer_id = attestation.get("signer_key_id", "?")
+
+    keys = {k.get("signer_key_id"): k for k in keylist_data.get("keys", [])}
+    sub_key = keys.get(sub_signer_id)
+
+    output = {
+        "attestation_id": attestation.get("attestation_id"),
+        "substrate_signer": {
+            "signer_key_id": sub_signer_id,
+            "in_keylist": sub_key is not None,
+            "status": sub_key.get("status") if sub_key else "unknown",
+        },
+        "outer_signer": {
+            "signer_key_id": outer_signer_id,
+            "note": "operator-local key; not anchored to public keylist by design",
+        },
+    }
+
+    if json_only:
+        print(json.dumps(output, indent=2))
+        return
+
+    console.print()
+    console.print(f"[bold]attestation[/bold]  {output['attestation_id']}")
+    console.print(
+        f"[bold]substrate signer[/bold]  {sub_signer_id}  "
+        f"[dim]({'in keylist' if sub_key else 'NOT in keylist'}, "
+        f"status={output['substrate_signer']['status']})[/dim]"
+    )
+    console.print(
+        f"[bold]outer signer[/bold]      {outer_signer_id}  "
+        f"[dim](operator-local; not in public keylist by design)[/dim]"
+    )
+    console.print()
 
 
 @app.command()
