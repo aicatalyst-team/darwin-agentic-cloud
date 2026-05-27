@@ -1,0 +1,29 @@
+# darwin-batch-runner container image (Python language).
+#
+# Built and pushed to ECR by infra/aws_runner/batch_deploy.py.
+# Deployed to:
+#   darwin-batch-runner-python-{region}  (one per region)
+#
+# Base: official Python 3.12 slim. Batch on EC2 Spot has no equivalent
+# of the Lambda RIC; the container is a plain process whose entrypoint
+# runs the workload, writes the result to S3, and exits with the
+# workload's exit code.
+#
+# boto3 is required for the S3 result-write step. We pin to a known
+# version to keep image builds reproducible.
+
+FROM python:3.12-slim
+
+# Avoid stdout buffering so Batch CloudWatch logs are real-time.
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# boto3 only — runner intentionally has no other runtime dependencies.
+RUN pip install --no-cache-dir boto3==1.35.0
+
+# Copy the runner script. Permissions stay 644 (default).
+COPY batch_runner.py /opt/darwin/batch_runner.py
+
+# Run as the workload. Container exit code = workload exit code, which
+# Batch surfaces as containerExitCode on the job.
+ENTRYPOINT ["python3", "/opt/darwin/batch_runner.py"]

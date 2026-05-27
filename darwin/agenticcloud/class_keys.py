@@ -91,6 +91,7 @@ ALLOWED_SUBSTRATES: frozenset[str] = frozenset(
         "aws-lambda-ap-northeast-1",
         "modal-v0",
         "akash-v0",
+        "aws-batch-ec2-spot-v0-us-east-1",
     }
 )
 

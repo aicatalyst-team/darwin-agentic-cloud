@@ -1,0 +1,51 @@
+{
+  "attestation_id": "att_ce01c3ba2a784505",
+  "schema": "darwin.cloud/agenticcloud/attestation/v0.2",
+  "issued_at": "2026-05-27T09:46:24Z",
+  "workload_spec_hash": "66af27007bdef0c4f5d7756ffd68919e6b9fae30f685ac38b80d88b68d2e45ee",
+  "execution_result": {
+    "output_hash": "87a6e77e106d0aed7e2b52fd7108cee1cb8d7429dad7495e3e67d43dc40ab0a5",
+    "substrate": {
+      "id": "local-docker-v0",
+      "version": "0.1.0",
+      "identity_signature": "KDtItT8vYsh3yJVuk2GXAqa/ksO6pQljggN86nSHs5gjNYmM8XWgcyumTBSFTQxWiIlvQ1xyqRPFyzVFSoM0Aw==",
+      "identity_signer_type": "darwin-class-key",
+      "identity_signer_key_id": "dac-class-local-docker-v0-ca698355dcb631e3",
+      "evidence_schema_id": "darwin.cloud/evidence/local-docker/v1",
+      "evidence": {
+        "container_status": "ok",
+        "exit_code": 0,
+        "stdout_hash": "87a6e77e106d0aed7e2b52fd7108cee1cb8d7429dad7495e3e67d43dc40ab0a5",
+        "stderr_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "wall_time_sec": 0.18253803253173828
+      },
+      "extensions": {},
+      "tee_required": false
+    },
+    "cost_usd": 1.825e-05,
+    "stdout": "Hello, agent. This receipt was produced by darwin.run().\n",
+    "stderr": ""
+  },
+  "value_added_service": {
+    "identity_signing": {
+      "schema_compliant": true,
+      "keylist_url": "https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json"
+    },
+    "cost_cap_enforcement": {
+      "cap_usd": 0.1,
+      "estimated_usd_max": 0.003,
+      "actual_usd": 1.825e-05,
+      "within_cap": true,
+      "headroom_usd": 0.09998175
+    },
+    "routing_decision": {
+      "policy": "pick_by_cost",
+      "chosen_substrate_id": "local-docker-v0",
+      "chosen_reason": "lowest_estimated_cost ($0.003000)",
+      "candidates_considered": 1,
+      "rejected_substrates": []
+    }
+  },
+  "signer_key_id": "dac-local-d1bf7cad25875cee",
+  "signature": "4D7u2WbmkzMhtjsPw2HAxdg8ZgH467Wgk8R++lbDqkiWRQxmzcmi0t9IqoUtyitM5v/SV8Qpaq3+cr4twZSECw=="
+}

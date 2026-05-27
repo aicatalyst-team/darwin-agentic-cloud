@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>darwin.cloud — verifiable compute for AI agents</title>
+<meta name="description" content="A live signed v0.2 attestation. Verifiable cryptographically against the public Darwin keylist.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  /* Brand palette */
+  --brand-green: #00FF66;
+  --brand-gold: #FFB86C;
+  --brand-dim: #808080;
+  --brand-black: #000000;
+
+  /* M3 dark surfaces */
+  --surface-base: #000000;
+  --surface-1: #121212;
+  --surface-2: #1a1a1a;
+  --surface-3: #252525;
+  --surface-4: #2d2d2d;
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #C0C0C0;
+  --text-dim: #808080;
+  --text-on-accent: #000000;
+
+  /* Cert tokens */
+  --cert-frame: #00FF66;
+  --cert-gold: #FFB86C;
+  --cert-sepia: #d4a574;
+
+  /* Motion */
+  --ease-emphasized: cubic-bezier(0.2, 0.0, 0, 1.0);
+  --ease-standard: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: var(--brand-green); text-decoration: none; transition: opacity 200ms var(--ease-standard); }
+a:hover { opacity: 0.7; }
+
+code, pre, .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+::selection { background: var(--brand-green); color: var(--text-on-accent); }
+
+/* ============================================================================
+   Hero band
+   ============================================================================ */
+
+.hero {
+  padding: 96px 24px 64px;
+  text-align: center;
+  position: relative;
+  border-bottom: 1px solid var(--surface-3);
+  background: radial-gradient(ellipse at center top, rgba(0, 255, 102, 0.03), transparent 60%);
+}
+
+.hero-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brand-green);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 800ms var(--ease-emphasized) 100ms forwards;
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: clamp(48px, 7vw, 88px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 16ch;
+  margin: 0 auto 24px;
+  opacity: 0;
+  animation: fadeUp 800ms var(--ease-emphasized) 200ms forwards;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--brand-green);
+}
+
+.hero-tagline {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--text-secondary);
+  max-width: 52ch;
+  margin: 0 auto 48px;
+  opacity: 0;
+  animation: fadeUp 800ms var(--ease-emphasized) 300ms forwards;
+}
+
+.install-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: var(--surface-2);
+  border: 1px solid var(--surface-4);
+  border-radius: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  opacity: 0;
+  animation: fadeUp 800ms var(--ease-emphasized) 400ms forwards;
+  transition: border-color 200ms var(--ease-standard);
+}
+
+.install-block:hover { border-color: var(--brand-green); }
+
+.install-block .prompt { color: var(--brand-dim); user-select: none; }
+.install-block .command { color: var(--text-primary); }
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--surface-4);
+  color: var(--brand-dim);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 150ms var(--ease-standard);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.copy-btn:hover { color: var(--brand-green); border-color: var(--brand-green); }
+.copy-btn.copied { color: var(--brand-green); border-color: var(--brand-green); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================================
+   Section frames
+   ============================================================================ */
+
+main { max-width: 880px; margin: 0 auto; padding: 64px 24px; }
+
+.section { margin-bottom: 96px; }
+
+.section-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brand-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: 36px;
+  line-height: 1.2;
+  margin-bottom: 24px;
+  letter-spacing: -0.01em;
+}
+
+.section-body {
+  font-size: 17px;
+  color: var(--text-secondary);
+  max-width: 64ch;
+}
+
+/* ============================================================================
+   Certificate region — the centerpiece
+   ============================================================================ */
+
+.cert-wrapper {
+  background: var(--surface-2);
+  border: 2px solid var(--cert-frame);
+  border-radius: 8px;
+  padding: 56px 48px;
+  margin: 32px 0;
+  position: relative;
+  box-shadow:
+    0 0 0 1px var(--surface-4) inset,
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(0, 255, 102, 0.08);
+}
+
+.cert-wrapper::before,
+.cert-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--cert-frame);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.cert-header { text-align: center; margin-bottom: 32px; }
+
+.cert-title-bar {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cert-gold);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cert-title-bar .seal {
+  font-size: 14px;
+  color: var(--cert-gold);
+  animation: sealPulse 4s ease-in-out infinite;
+}
+
+@keyframes sealPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.08); }
+}
+
+.cert-motto {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cert-gold);
+  letter-spacing: 0.25em;
+  margin-bottom: 32px;
+}
+
+.cert-number {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.cert-number .label { color: var(--cert-gold); }
+.cert-number .value { color: var(--text-primary); letter-spacing: 0.05em; }
+
+.cert-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  padding: 4px 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+}
+
+.cert-row.centered {
+  text-align: center;
+  display: block;
+}
+
+.cert-row .key {
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.cert-row .val {
+  color: var(--text-primary);
+  text-align: left;
+  word-break: break-all;
+}
+
+.cert-row .val.gold { color: var(--cert-gold); }
+.cert-row .val.green { color: var(--brand-green); }
+
+.cert-section {
+  margin: 32px 0;
+  text-align: center;
+}
+
+.cert-section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.cert-divider {
+  text-align: center;
+  color: var(--cert-gold);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  margin: 24px 0;
+  letter-spacing: 0.5em;
+  user-select: none;
+}
+
+.cert-vas-row {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  margin: 6px 0;
+}
+
+.cert-vas-row .check { color: var(--cert-gold); margin-right: 8px; font-weight: bold; }
+.cert-vas-row .label { color: var(--text-primary); margin-right: 16px; }
+.cert-vas-row .detail { color: var(--text-dim); }
+
+.cert-signed {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cert-gold);
+  letter-spacing: 0.15em;
+  margin: 32px 0 16px;
+  text-align: center;
+}
+
+/* ============================================================================
+   Verify region
+   ============================================================================ */
+
+.verify-card {
+  background: var(--surface-2);
+  border: 1px solid var(--surface-4);
+  border-radius: 8px;
+  padding: 32px;
+  margin: 24px 0;
+}
+
+.verify-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 16px;
+  align-items: start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--surface-3);
+}
+
+.verify-step:last-child { border-bottom: none; }
+
+.verify-step-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--brand-green);
+  line-height: 1;
+}
+
+.verify-step-text { font-size: 15px; color: var(--text-secondary); }
+
+.verify-step-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: var(--surface-base);
+  border: 1px solid var(--surface-4);
+  border-radius: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--brand-green);
+  word-break: break-all;
+}
+
+/* ============================================================================
+   Download CTA
+   ============================================================================ */
+
+.download-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--surface-2);
+  border: 1px solid var(--brand-green);
+  border-radius: 8px;
+  padding: 32px;
+  margin: 24px 0;
+}
+
+.download-text { flex: 1; }
+.download-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.download-subtitle { font-size: 14px; color: var(--text-dim); }
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: var(--brand-green);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 6px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 200ms var(--ease-emphasized), box-shadow 200ms var(--ease-emphasized);
+}
+
+.download-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 255, 102, 0.25);
+}
+
+/* ============================================================================
+   Footer
+   ============================================================================ */
+
+footer {
+  border-top: 1px solid var(--surface-3);
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+footer a { color: var(--text-dim); margin: 0 12px; }
+footer a:hover { color: var(--brand-green); opacity: 1; }
+
+footer .footer-motto {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--cert-gold);
+  letter-spacing: 0.3em;
+  margin-top: 24px;
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   Responsive
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .cert-wrapper { padding: 32px 20px; }
+  .cert-row { grid-template-columns: 1fr; gap: 4px; text-align: left; }
+  .cert-row .key { text-align: left; }
+  .download-card { flex-direction: column; align-items: stretch; }
+  .install-block { flex-direction: column; align-items: stretch; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-eyebrow">darwin.cloud — open verifiable compute</div>
+  <h1 class="hero-title">A receipt for every <em>agent action</em>.</h1>
+  <p class="hero-tagline">Every workload signed, every cost capped, every routing decision auditable. The attestation below is real — produced by <code style="color: var(--brand-green);">darwin.run()</code> at build time.</p>
+  <div class="install-block">
+    <span class="prompt">$</span>
+    <span class="command">pip install darwin-agentic-cloud</span>
+    <button class="copy-btn" onclick="copyCmd(this, 'pip install darwin-agentic-cloud')">copy</button>
+  </div>
+</section>
+
+<main>
+  <section class="section">
+    <div class="section-eyebrow">live attestation</div>
+    <h2 class="section-title">The receipt itself.</h2>
+    <p class="section-body">This page was generated when the server was deployed. Every field is real — the substrate executed real code, the substrate identity is signed by a class key anchored to the public keylist, the outer envelope is signed by the operator's key, and the cost is the actual cost of the wall-clock execution.</p>
+
+    <div class="cert-wrapper">
+      <div class="cert-header">
+        <div class="cert-title-bar">
+          <span class="seal">✦</span>
+          <span>Attestation of Execution · darwin.agenticcloud</span>
+          <span class="seal">✦</span>
+        </div>
+        <div class="cert-motto">✦ SECURITAS · STABILITAS · SIGNUM ✦</div>
+        <div class="cert-number">
+          <span class="label">CERTIFICATE No.</span>
+          <span class="value mono" id="cert-no">{CERT_NO}</span>
+        </div>
+      </div>
+
+      <div class="cert-row centered"><span class="key">issued</span>&nbsp;&nbsp;<span class="val mono" id="cert-issued">{CERT_ISSUED}</span></div>
+      <div class="cert-row centered"><span class="key">workload</span>&nbsp;&nbsp;<span class="val mono" id="cert-workload">{CERT_WORKLOAD}</span></div>
+      <div class="cert-row centered"><span class="key">output</span>&nbsp;&nbsp;<span class="val mono" id="cert-output">{CERT_OUTPUT}</span></div>
+      <div class="cert-row centered"><span class="key">cost</span>&nbsp;&nbsp;<span class="val mono" id="cert-cost">{CERT_COST}</span></div>
+
+      <div class="cert-divider">─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─</div>
+
+      <div class="cert-row centered"><span class="key">substrate</span>&nbsp;&nbsp;<span class="val gold mono" id="cert-substrate">{CERT_SUBSTRATE}</span></div>
+      <div class="cert-row centered"><span class="key">schema</span>&nbsp;&nbsp;<span class="val gold mono" id="cert-schema">{CERT_SCHEMA}</span></div>
+      <div class="cert-row centered"><span class="key">sub-signer</span>&nbsp;&nbsp;<span class="val green mono" id="cert-sub-signer">{CERT_SUB_SIGNER}</span></div>
+
+      <div class="cert-section">
+        <div class="cert-section-label">value-added</div>
+        <div class="cert-vas-row"><span class="check">✓</span><span class="label">cost cap</span><span class="detail" id="cert-vas-cost">{CERT_VAS_COST}</span></div>
+        <div class="cert-vas-row"><span class="check">→</span><span class="label">routed</span><span class="detail" id="cert-vas-routed">{CERT_VAS_ROUTED}</span></div>
+        <div class="cert-vas-row"><span class="check">✓</span><span class="label">identity</span><span class="detail">anchored to public keylist</span></div>
+      </div>
+
+      <div class="cert-divider">─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─ ◊ ─</div>
+
+      <div class="cert-signed">✓ ATTESTATION SIGNED</div>
+      <div class="cert-row centered"><span class="key">by</span>&nbsp;&nbsp;<span class="val green mono" id="cert-outer-signer">{CERT_OUTER_SIGNER}</span></div>
+      <div class="cert-row centered"><span class="key">schema</span>&nbsp;&nbsp;<span class="val gold mono">darwin.cloud/agenticcloud/attestation/v0.2</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-eyebrow">verify it</div>
+    <h2 class="section-title">Three commands. No trust required.</h2>
+    <p class="section-body">Anyone, anywhere, anytime can verify this attestation. The verification path is open. The keylist is public. The substrate identity signature is over the canonical execution payload. Don't trust this page — verify it.</p>
+
+    <div class="verify-card">
+      <div class="verify-step">
+        <div class="verify-step-num">1</div>
+        <div>
+          <div class="verify-step-text">Fetch the public substrate keylist.</div>
+          <div class="verify-step-code">curl https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json
+            <button class="copy-btn" onclick="copyCmd(this, 'curl https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json')">copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="verify-step">
+        <div class="verify-step-num">2</div>
+        <div>
+          <div class="verify-step-text">Confirm the substrate signer's public key is present and active.</div>
+          <div class="verify-step-code mono">look up signer_key_id: <span id="ver-signer">{CERT_SUB_SIGNER}</span></div>
+        </div>
+      </div>
+      <div class="verify-step">
+        <div class="verify-step-num">3</div>
+        <div>
+          <div class="verify-step-text">Verify the signature against the canonical signed payload.</div>
+          <div class="verify-step-code">darwin verify ./attestation.json
+            <button class="copy-btn" onclick="copyCmd(this, 'darwin verify ./attestation.json')">copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-eyebrow">try it yourself</div>
+    <h2 class="section-title">Download the attestation. Verify locally.</h2>
+    <div class="download-card">
+      <div class="download-text">
+        <div class="download-title">attestation.json</div>
+        <div class="download-subtitle">The exact signed v0.2 attestation rendered above. Verify with <code style="color: var(--brand-green);">darwin verify ./attestation.json</code>.</div>
+      </div>
+      <a href="/demo/attestation.json" download="attestation.json" class="download-btn">↓ Download JSON</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-eyebrow">references</div>
+    <h2 class="section-title">The full schema.</h2>
+    <p class="section-body">v0.2 attestations conform to a public JSON Schema (Draft 07). Anyone implementing a verifier can validate the structural shape before cryptographic verification.</p>
+    <div style="margin-top: 24px;">
+      <a href="/.well-known/schemas/attestation/v0.2" style="font-family: 'IBM Plex Mono', monospace; font-size: 14px;">/.well-known/schemas/attestation/v0.2  →</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <a href="https://github.com/vje013/darwin-agentic-cloud">github</a>
+  <a href="/docs">api docs</a>
+  <a href="/.well-known/substrate-keys.json">keylist</a>
+  <a href="/.well-known/schemas/attestation/v0.2">schema</a>
+  <div class="footer-motto">✦ SECURITAS · STABILITAS · SIGNUM ✦</div>
+  <div style="margin-top: 16px; font-size: 11px;">darwin.cloud · verifiable compute for AI agents · v0.2.0</div>
+</footer>
+
+<script>
+function copyCmd(btn, txt) {
+  navigator.clipboard.writeText(txt).then(() => {
+    const original = btn.textContent;
+    btn.textContent = "copied ✓";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove("copied");
+    }, 1400);
+  });
+}
+</script>
+
+</body>
+</html>

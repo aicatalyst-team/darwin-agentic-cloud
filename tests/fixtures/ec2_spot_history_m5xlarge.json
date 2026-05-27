@@ -1,0 +1,40 @@
+{
+    "NextToken": "AAFDHpmBE607mjLoLJbsjP/BLnElUwA694BizyJYNvs4RSzPDzpAbSppbWYc26fAGGtTKqJHTjeuL2Gal7GNbLZ6w1/NnDX5W/LuoSuVFwZztC99WOkkzmpu8FtUKM6bpD3rpoPWUlPRuetSeI2mZO7VAfnX0rrMJA==",
+    "SpotPriceHistory": [
+        {
+            "AvailabilityZone": "us-east-1a",
+            "InstanceType": "m5.xlarge",
+            "ProductDescription": "Linux/UNIX",
+            "SpotPrice": "0.073400",
+            "Timestamp": "2026-05-27T04:00:06+00:00"
+        },
+        {
+            "AvailabilityZone": "us-east-1f",
+            "InstanceType": "m5.xlarge",
+            "ProductDescription": "Linux/UNIX",
+            "SpotPrice": "0.076600",
+            "Timestamp": "2026-05-27T03:00:05+00:00"
+        },
+        {
+            "AvailabilityZone": "us-east-1d",
+            "InstanceType": "m5.xlarge",
+            "ProductDescription": "Linux/UNIX",
+            "SpotPrice": "0.076400",
+            "Timestamp": "2026-05-27T01:00:19+00:00"
+        },
+        {
+            "AvailabilityZone": "us-east-1c",
+            "InstanceType": "m5.xlarge",
+            "ProductDescription": "Linux/UNIX",
+            "SpotPrice": "0.073900",
+            "Timestamp": "2026-05-27T01:00:19+00:00"
+        },
+        {
+            "AvailabilityZone": "us-east-1f",
+            "InstanceType": "m5.xlarge",
+            "ProductDescription": "Linux/UNIX",
+            "SpotPrice": "0.076400",
+            "Timestamp": "2026-05-26T20:00:18+00:00"
+        }
+    ]
+}
