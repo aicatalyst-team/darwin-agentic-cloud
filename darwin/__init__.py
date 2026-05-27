@@ -16,7 +16,7 @@ __license__ = "Apache-2.0"
 #     attestation = run("print('hi')")
 #
 # See darwin.agenticcloud.runtime_v02 for full documentation.
-from darwin.agenticcloud.runtime_v02 import (  # noqa: E402
+from darwin.agenticcloud.runtime_v02 import (
     CostCapExceeded,
     Runtime,
     run,
