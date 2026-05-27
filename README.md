@@ -9,8 +9,11 @@
 > **Verifiable compute for AI agents.** Every workload signed. Every cost capped. Every routing decision auditable. Open verification, paid signing.
 
 **Install:** `pip install darwin-agentic-cloud`
+
 **Live demo:** https://darwin-agentic-cloud.fly.dev/demo
+
 **Public keylist:** https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json
+
 **v0.2 Schema:** https://darwin-agentic-cloud.fly.dev/.well-known/schemas/attestation/v0.2
 
 ---
