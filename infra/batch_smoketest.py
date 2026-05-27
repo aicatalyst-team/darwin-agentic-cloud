@@ -9,6 +9,7 @@ Will submit a real Batch job, provision a real m5.xlarge Spot instance
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from dataclasses import replace as dataclass_replace
@@ -28,6 +29,16 @@ RESULT_BUCKET = f"darwin-batch-results-{ACCOUNT_ID}-{REGION}"
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="as_json",
+        help="Print raw attestation JSON instead of the branded panel.",
+    )
+    args = parser.parse_args()
+    as_json = args.as_json
+
     os.environ.setdefault("AWS_PROFILE", "darwin")
 
     signer = OperatorFallbackSigner()
@@ -85,11 +96,27 @@ def main() -> int:
         identity=identity,
     )
 
-    print("=" * 72)
-    print("v0.2 ATTESTATION (signed, ready for verification)")
-    print("=" * 72)
-    print(json.dumps(attestation, indent=2, default=str))
-    print()
+    if as_json:
+        print(json.dumps(attestation, indent=2, default=str, sort_keys=True))
+        return 0
+
+    from rich.console import Console
+
+    from darwin.agenticcloud.ui import render_attestation_panel_auto
+
+    console = Console()
+    console.print()
+    console.print(
+        f"[dim]smoke ·[/dim] [bold]{sub.substrate_id}[/bold]   "
+        f"[dim](real AWS — job_id={result.evidence['job_id']})[/dim]"
+    )
+    console.print()
+    console.print(render_attestation_panel_auto(attestation))
+    console.print()
+    console.print(
+        "[dim]for raw json:[/dim] [bold]AWS_PROFILE=darwin "
+        "python infra/batch_smoketest.py --json[/bold]"
+    )
 
     return 0
 

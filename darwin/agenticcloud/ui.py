@@ -525,22 +525,36 @@ def render_v02_attestation_panel(attestation: dict) -> Panel:
     # --- Evidence rows ---
     body.append("evidence", style=BRAND_DIM)
     body.append("\n")
+    # Dynamic column width: pad keys to longest-key + 2 so values always
+    # have a visible gap regardless of which substrate the evidence is from.
+    if evidence:
+        key_width = max(len(k) for k in evidence) + 2
+    else:
+        key_width = 24
     for key in sorted(evidence.keys()):
         val = evidence[key]
-        body.append(f"  {key:<22}", style=BRAND_DIM)
+        body.append(f"  {key:<{key_width}}", style=BRAND_DIM)
         body.append(_fmt_evidence_value(key, val), style="white")
         body.append("\n")
     body.append("\n")
 
     # --- Cryptography / outer signature ---
+    outer_signer_key = attestation.get("signer_key_id")
     body.append("signer       ", style=BRAND_DIM)
-    body.append(attestation.get("signer_key_id", "?"), style=BRAND_GREEN)
+    if outer_signer_key:
+        body.append(outer_signer_key, style=BRAND_GREEN)
+    else:
+        body.append("(unsigned)", style=BRAND_DIM)
     body.append("\n")
     body.append("\n")
 
     # --- Verification line ---
-    body.append("✓ ", style=f"bold {BRAND_GREEN}")
-    body.append("attestation signed", style="white")
+    if outer_signer_key:
+        body.append("✓ ", style=f"bold {BRAND_GREEN}")
+        body.append("attestation signed", style="white")
+    else:
+        body.append("⚠ ", style=f"bold {BRAND_AMBER}")
+        body.append("substrate signed; outer signature pending", style=BRAND_AMBER)
     body.append("\n")
     body.append("schema       ", style=BRAND_DIM)
     body.append(
