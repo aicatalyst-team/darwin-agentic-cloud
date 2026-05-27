@@ -56,7 +56,7 @@ ATTESTATION_SCHEMA_URI: str = "darwin.cloud/agenticcloud/attestation/v0.2"
 #: Public location of the substrate-class keylist. Verifiers fetch this to
 #: resolve substrate-class signatures without trusting any single Darwin
 #: install. Format is documented in RFC-0003 (Phase 3).
-SUBSTRATE_KEYLIST_URL: str = "https://darwin.cloud/.well-known/substrate-keys.json"
+SUBSTRATE_KEYLIST_URL: str = "https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json"
 
 #: Identity declaration domain separator. Substrate identity payloads are
 #: prefixed with this label before signing so that an identity signature

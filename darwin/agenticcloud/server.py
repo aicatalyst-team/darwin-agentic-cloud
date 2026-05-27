@@ -24,7 +24,7 @@ import json
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
@@ -390,10 +390,99 @@ def create_app(
         keylist = cks.keylist()
         return keylist
 
+    @app.get(
+        "/.well-known/schemas/attestation/v0.2",
+        tags=["substrate"],
+        include_in_schema=True,
+        response_model=None,
+    )
+    async def well_known_schema_v02() -> dict[str, Any]:
+        """Public JSON Schema (Draft 07) for v0.2 attestations.
+
+        Any verifier can fetch this schema, validate the structural shape
+        of an attestation, and then proceed to cryptographic verification.
+        The schema id matches the URL where it is published, so signed
+        attestations are fully self-describing.
+        """
+        import json as _json
+        from pathlib import Path as _Path
+
+        schema_path = _Path(__file__).parent / "schemas" / "attestation_v0_2.json"
+        return _json.loads(schema_path.read_text(encoding="utf-8"))
+
+    @app.get(
+        "/demo",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def demo_page() -> HTMLResponse:
+        """Render the baked demo attestation as an HTML certificate.
+
+        The attestation was produced by darwin.run() at build time. Every
+        field is real and verifiable. Visitors can also download the raw
+        JSON at /demo/attestation.json and verify locally with darwin verify.
+        """
+        import json as _json
+        from pathlib import Path as _P
+
+        tmpl_path = _P(__file__).parent / "templates" / "demo.html"
+        att_path = _P(__file__).parent / "templates" / "demo_attestation.json"
+
+        html = tmpl_path.read_text(encoding="utf-8")
+        att = _json.loads(att_path.read_text(encoding="utf-8"))
+
+        exec_result = att.get("execution_result", {})
+        substrate = exec_result.get("substrate", {})
+        vas = att.get("value_added_service", {})
+        cce = vas.get("cost_cap_enforcement", {})
+        rd = vas.get("routing_decision", {})
+
+        def _short(h: str, n: int = 8) -> str:
+            if not h:
+                return "?"
+            clean = h.removeprefix("sha256:")
+            return f"sha256:{clean[:n]}...{clean[-4:]}" if len(clean) > n + 4 else h
+
+        cert_no = att.get("attestation_id", "").upper().removeprefix("ATT_")
+
+        substitutions = {
+            "{CERT_NO}": cert_no,
+            "{CERT_ISSUED}": att.get("issued_at", "?"),
+            "{CERT_WORKLOAD}": _short(att.get("workload_spec_hash", "")),
+            "{CERT_OUTPUT}": _short(exec_result.get("output_hash", "")),
+            "{CERT_COST}": f"${exec_result.get('cost_usd', 0.0):.6f}",
+            "{CERT_SUBSTRATE}": substrate.get("id", "?"),
+            "{CERT_SCHEMA}": substrate.get("evidence_schema_id", "?"),
+            "{CERT_SUB_SIGNER}": substrate.get("identity_signer_key_id", "?"),
+            "{CERT_VAS_COST}": (
+                f"${cce.get('actual_usd', 0.0):.6f} / ${cce.get('cap_usd', 0.0):.4f}"
+            ),
+            "{CERT_VAS_ROUTED}": (
+                f"{rd.get('policy', '?')} "
+                f"(1 picked from {rd.get('candidates_considered', 0)} eligible)"
+            ),
+            "{CERT_OUTER_SIGNER}": att.get("signer_key_id", "?"),
+        }
+        for k, v in substitutions.items():
+            html = html.replace(k, str(v))
+
+        return HTMLResponse(html)
+
+    @app.get(
+        "/demo/attestation.json",
+        tags=["demo"],
+        include_in_schema=False,
+    )
+    async def demo_attestation_json() -> dict[str, Any]:
+        """Serve the baked demo attestation as raw JSON for local verification."""
+        import json as _json
+        from pathlib import Path as _P
+
+        att_path = _P(__file__).parent / "templates" / "demo_attestation.json"
+        return _json.loads(att_path.read_text(encoding="utf-8"))
+
     # Custom branded docs page (Material 3, dark, brand colors)
     from pathlib import Path as _Path
-
-    from fastapi.responses import HTMLResponse
 
     _TEMPLATE_PATH = _Path(__file__).parent / "templates" / "docs.html"
 

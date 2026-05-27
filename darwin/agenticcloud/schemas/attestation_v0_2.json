@@ -1,0 +1,229 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://darwin-agentic-cloud.fly.dev/.well-known/schemas/attestation/v0.2",
+  "title": "darwin.cloud agenticcloud attestation v0.2",
+  "description": "Cryptographically signed receipt of workload execution on a Darwin substrate. Combines an inner substrate identity signature (anchored to a public keylist) with an outer operator signature (anchored to the calling environment).",
+  "type": "object",
+  "required": [
+    "schema",
+    "attestation_id",
+    "issued_at",
+    "workload_spec_hash",
+    "execution_result",
+    "value_added_service",
+    "signer_key_id",
+    "signature"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "darwin.cloud/agenticcloud/attestation/v0.2",
+      "description": "Schema identifier. Must match exactly for verifiers to apply this schema."
+    },
+    "attestation_id": {
+      "type": "string",
+      "pattern": "^att_[0-9a-f]{16}$",
+      "description": "Globally unique attestation identifier."
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp."
+    },
+    "workload_spec_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 hex digest of the canonical-JSON-serialized WorkloadSpec."
+    },
+    "execution_result": {
+      "$ref": "#/definitions/execution_result"
+    },
+    "value_added_service": {
+      "$ref": "#/definitions/value_added_service",
+      "description": "Block describing what Darwin's signing/routing layer added on top of the wholesale substrate execution. Auditable by any third party."
+    },
+    "signer_key_id": {
+      "type": "string",
+      "description": "Identifier of the outer operator key that signed this attestation."
+    },
+    "signature": {
+      "type": "string",
+      "description": "Base64-encoded Ed25519 signature over the canonical attestation payload (with signer_key_id and signature fields removed)."
+    }
+  },
+  "definitions": {
+    "execution_result": {
+      "type": "object",
+      "required": [
+        "output_hash",
+        "cost_usd",
+        "substrate"
+      ],
+      "properties": {
+        "output_hash": {
+          "type": "string",
+          "description": "SHA-256 of workload stdout, prefixed with 'sha256:'."
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Actual cost in USD."
+        },
+        "stdout": {
+          "type": "string"
+        },
+        "stderr": {
+          "type": "string"
+        },
+        "substrate": {
+          "$ref": "#/definitions/substrate_block"
+        }
+      }
+    },
+    "substrate_block": {
+      "type": "object",
+      "required": [
+        "id",
+        "version",
+        "evidence_schema_id",
+        "evidence",
+        "identity_signer_type",
+        "identity_signer_key_id",
+        "identity_signature"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Substrate identifier (e.g. 'aws-batch-ec2-spot-v0-us-east-1')."
+        },
+        "version": {
+          "type": "string"
+        },
+        "evidence_schema_id": {
+          "type": "string",
+          "description": "URI identifying the evidence schema for this substrate type."
+        },
+        "evidence": {
+          "type": "object",
+          "description": "Substrate-specific execution evidence. Shape determined by evidence_schema_id."
+        },
+        "identity_signer_type": {
+          "type": "string",
+          "enum": [
+            "darwin-class-key",
+            "operator-fallback"
+          ],
+          "description": "darwin-class-key: substrate identity signed by Darwin's hosted class key, anchored to public keylist. operator-fallback: signed by the calling operator's local key (used when hosted signer is unavailable)."
+        },
+        "identity_signer_key_id": {
+          "type": "string",
+          "description": "Key identifier for the substrate identity signer."
+        },
+        "identity_signature": {
+          "type": "string",
+          "description": "Base64 Ed25519 signature over the canonical identity payload."
+        }
+      }
+    },
+    "value_added_service": {
+      "type": "object",
+      "required": [
+        "identity_signing",
+        "cost_cap_enforcement",
+        "routing_decision"
+      ],
+      "properties": {
+        "identity_signing": {
+          "type": "object",
+          "required": [
+            "schema_compliant",
+            "keylist_url"
+          ],
+          "properties": {
+            "schema_compliant": {
+              "type": "boolean"
+            },
+            "keylist_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL where the substrate keylist can be fetched for verification."
+            }
+          }
+        },
+        "cost_cap_enforcement": {
+          "type": "object",
+          "required": [
+            "cap_usd",
+            "estimated_usd_max",
+            "actual_usd",
+            "within_cap",
+            "headroom_usd"
+          ],
+          "properties": {
+            "cap_usd": {
+              "type": "number",
+              "minimum": 0.0
+            },
+            "estimated_usd_max": {
+              "type": "number",
+              "minimum": 0.0
+            },
+            "actual_usd": {
+              "type": "number",
+              "minimum": 0.0
+            },
+            "within_cap": {
+              "type": "boolean"
+            },
+            "headroom_usd": {
+              "type": "number"
+            }
+          }
+        },
+        "routing_decision": {
+          "type": "object",
+          "required": [
+            "policy",
+            "chosen_substrate_id",
+            "chosen_reason",
+            "candidates_considered"
+          ],
+          "properties": {
+            "policy": {
+              "type": "string",
+              "enum": [
+                "pick_by_cost",
+                "pick_by_substrate",
+                "pick_by_capability"
+              ]
+            },
+            "chosen_substrate_id": {
+              "type": "string"
+            },
+            "chosen_reason": {
+              "type": "string"
+            },
+            "candidates_considered": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "rejected_substrates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
