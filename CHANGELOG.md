@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] — 2026-05-27
+
+### Fixed
+
+- README rewrite shipped to PyPI. v3.0.0 was tagged before the README rewrite landed,
+  so PyPI rendered the v2.0.0 description. v3.0.1 republishes with the full v3.0.0
+  README (problem-first framing, agent-first audience, 7-verb CLI reference, Python
+  API documentation, MCP setup, architecture, security model, examples, roadmap,
+  software citations).
+- Removed unused `# noqa: E402` directive flagged by ruff RUF100 in `darwin/__init__.py`.
+
+No functional changes. No new dependencies. No behavior change in `darwin run`,
+`darwin verify`, or any other surface.
+
 ## [3.0.0] — 2026-05-27
 
 The verifiable-compute toll-booth. This release introduces the v0.2 attestation schema,
