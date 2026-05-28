@@ -6,7 +6,7 @@
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Schema: v0.2](https://img.shields.io/badge/schema-v0.2-FFB86C.svg)](https://darwin-agentic-cloud.fly.dev/.well-known/schemas/attestation/v0.2)
 
-> **Verifiable compute for AI agents.** Every workload signed. Every cost capped. Every routing decision auditable. Open verification, paid signing.
+> **Verifiable compute for AI agents.** Every workload signed. Every cost capped. Every routing decision auditable. Open source, verified, free compute.
 
 **Install:** `pip install darwin-agentic-cloud`
 
