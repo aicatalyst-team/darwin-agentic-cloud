@@ -17,6 +17,10 @@
 **v0.2 Schema:** https://darwin-agentic-cloud.fly.dev/.well-known/schemas/attestation/v0.2
 
 ---
+## Darwin's Mission
+
+Increase AI adoption by increasing AI safety.
+---
 
 ## The question agents can't answer today
 
