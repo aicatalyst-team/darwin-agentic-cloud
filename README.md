@@ -33,7 +33,7 @@ Darwin Agentic Cloud keeps businesses in control of their agent spend by providi
 
 Simply put, DAC dramatically increases the chances of your business’s agent giving you the purchase outcome you want.
 
-If you want your business’s agent booking travel, buying office supplies, we make sure it actually happens.
+If you want your business’s agent booking your travel, buying your office supplies, making any business purchase at all, we make sure it actually happens.
 
 
 - DAC is free. You never pay us. Ever.
