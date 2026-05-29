@@ -6,11 +6,21 @@
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Schema: v0.2](https://img.shields.io/badge/schema-v0.2-FFB86C.svg)](https://darwin-agentic-cloud.fly.dev/.well-known/schemas/attestation/v0.2)
 
-> **Verifiable and free compute for AI agents.** Every workload signed. Every routing decision auditable.
+> **Verifiable and free cloud compute for AI agents.**
 >
-> No accounts, no API keys, no credit cards.
+> We provide an agent-first environment where every autonomous action and choice is bound and signed, including what they buy. 
 >
->  Open source, verified, free compute.
+> Your agent acts only where it can provably succeed, spends only what you authorized, and brings back a signed receipt for every step it took.
+> 
+> No new accounts. No new API keys.
+>
+> Just sign in with Gmail. Your card stays in your Google account.
+>
+> Open source. Free to users. Contributors welcome.
+>
+> Built on: webMCP + AP2
+>
+> Sandboxed Beta + Research launching 6/1/2026
 
 **Install:** `pip install darwin-agentic-cloud`
 
