@@ -6,7 +6,11 @@
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Schema: v0.2](https://img.shields.io/badge/schema-v0.2-FFB86C.svg)](https://darwin-agentic-cloud.fly.dev/.well-known/schemas/attestation/v0.2)
 
-> **Verifiable compute for AI agents.** Every workload signed. Every cost capped. Every routing decision auditable. Open source, verified, free compute.
+> **Verifiable and free compute for AI agents.** Every workload signed. Every routing decision auditable.
+>
+> No accounts, no API keys, no credit cards.
+>
+>  Open source, verified, free compute.
 
 **Install:** `pip install darwin-agentic-cloud`
 
@@ -120,7 +124,7 @@ Every `darwin.run()` call returns a v0.2 attestation. The CLI renders it as an e
 | `issued_at` | When the execution happened |
 | `workload` (sha256) | Exactly what code/spec was executed |
 | `output` (sha256) | Exactly what stdout was produced |
-| `cost` | Real wall-time cost, computed from substrate-specific pricing |
+| `cost` | Real wall-time cost (what you'd pay on a non-Darwin cloud) |
 | `substrate` + `version` | Which substrate ran the workload |
 | `evidence` | Substrate-specific receipt (container status, exit code, hashes, wall time) |
 | `sub-signer` (class key) | Substrate identity signature, anchored to the public Darwin keylist |
@@ -153,10 +157,8 @@ uv pip install -e .
 
 - **Python 3.11+**
 - **Docker** for local execution (any recent Docker Desktop / Engine works)
-- **AWS credentials** in env for AWS Batch / Lambda substrates (optional)
-- **Modal token** in env for the Modal substrate (optional)
 
-If only Docker is available, you get `local-docker-v0`. If AWS creds are set, you also get the four Lambda regions and AWS Batch. Auto-discovery happens at every `darwin.run()` call.
+If only Docker is available, you get `local-docker-v0`. For web based cloud compute, you also get the four Lambda regions and AWS Batch. Auto-discovery happens at every `darwin.run()` call.
 
 ---
 
@@ -192,7 +194,7 @@ Fetches the keylist, looks up the substrate identity key, verifies the signature
 
 ### `darwin price`
 
-Preflight only — see what each substrate would cost without running.
+Preflight only — see what each run environment would cost on a non-Darwin cloud.
 
 ```bash
 darwin price 'print("hi")'
@@ -201,7 +203,7 @@ darwin price hello.py --substrate aws-batch
 darwin price hello.py --json
 ```
 
-Returns a table sorted by estimated cost. Useful for deciding which substrate to run a real workload on.
+Returns a table sorted by estimated cost. Useful for deciding which substrate to run a workload on later if you choose a non-Darwin cloud.
 
 ### `darwin list`
 
@@ -212,7 +214,7 @@ darwin list
 darwin list --json
 ```
 
-Auto-discovery checks credentials, environment variables, and daemon availability. Substrates that fail any check are omitted with a reason.
+Auto-discovery checks environment variables and daemon availability. Substrates that fail any check are omitted with a reason.
 
 ### `darwin sign`
 
@@ -344,7 +346,7 @@ Or manually add to your `claude_desktop_config.json`:
 |---|---|
 | `darwin_run` | Execute workload, return signed v0.2 attestation |
 | `darwin_verify` | Verify attestation against keylist |
-| `darwin_price` | Get cost quote per available substrate |
+| `darwin_price` | Get cost quote per available substrate (what this would've cost you on a non-Darwin cloud) |
 | `darwin_list` | List discovered substrates |
 | `darwin_who` | Show whose keys signed an attestation |
 | `darwin_history` | Recent attestations from local storage |
@@ -406,7 +408,7 @@ Each substrate publishes its own evidence schema. The schema URI is embedded in 
 
 ### The Value-Added Service (VAS) block
 
-The VAS block is Darwin's commercial claim — three concrete services Darwin's signing layer provides on top of the wholesale substrate execution:
+The VAS block is Darwin's economic claim — three concrete services Darwin's signing layer provides on top of the wholesale substrate execution:
 
 ```json
 "value_added_service": {
@@ -436,13 +438,11 @@ Three claims, all auditable from the attestation alone:
 2. **Cost cap enforcement.** Pre-execution estimate, actual cost, headroom, within-cap flag.
 3. **Routing decision.** What policy was used, which substrate was picked, what was rejected and why.
 
----
+--- 
 
-## The toll-booth model
+## Darwin is **open.**
 
-Darwin is **open verification, paid signing.**
-
-**What's open (forever, free, Apache 2.0):**
+**What's open (free, Apache 2.0):**
 - The attestation schema
 - The substrate interface
 - The local-docker substrate
@@ -451,14 +451,10 @@ Darwin is **open verification, paid signing.**
 - The schema endpoint
 - The cert renderer
 - All client code
-
-**What's commercial:**
 - The hosted signing service (substrate class keys)
 - The routing layer for cloud substrates (AWS Batch, Lambda, Modal)
-- Enterprise SLAs on the keylist
-- Compliance attestations (SOC 2, FedRAMP, ISO 27001)
 
-You can self-host Darwin entirely — every byte of the verification path is open source. The commercial value is in the trust anchor: a public keylist that customers, auditors, and regulators can rely on. Darwin charges for hosting that anchor.
+You can self-host Darwin entirely — every byte of the verification path is open source. 
 
 ---
 
@@ -596,7 +592,7 @@ total = att1['execution_result']['cost_usd'] + att2['execution_result']['cost_us
 print(f"Total cost: ${total:.4f}")
 ```
 
-### Batch processing with cost guard
+### Batch processing with cost guard (we limit user usage to ~10 hours/day)
 
 ```python
 from darwin import run, CostCapExceeded
@@ -780,7 +776,7 @@ If you use Darwin in research, please cite:
 
 Apache 2.0. See [LICENSE](LICENSE).
 
-The attestation schema, substrate interface, and verification code are open. Darwin Adaptive Systems retains commercial rights to the hosted signing service and routing layer.
+The hosted signing service and routing layer are free to all users today; Darwin Adaptive Systems reserves the right to offer paid enterprise tiers in future.
 
 ---
 
