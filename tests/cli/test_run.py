@@ -13,6 +13,7 @@ tests.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from unittest.mock import patch
 
@@ -26,10 +27,24 @@ from darwin.agenticcloud.cli import app
 # ---------------------------------------------------------------------------
 
 
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
+
+def _strip_ansi(s):
+    return _ANSI_RE.sub("", s)
+
+
 @pytest.fixture
 def runner() -> CliRunner:
     """Typer CLI runner that captures stdout and stderr."""
     return CliRunner()
+
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
+
+def _strip_ansi(s):
+    return _ANSI_RE.sub("", s)
 
 
 @pytest.fixture
@@ -87,6 +102,13 @@ def fake_attestation() -> dict:
     }
 
 
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
+
+def _strip_ansi(s):
+    return _ANSI_RE.sub("", s)
+
+
 @pytest.fixture
 def mocked_run(fake_attestation):
     """Patch the underlying `darwin.run` to return our fake attestation.
@@ -97,6 +119,13 @@ def mocked_run(fake_attestation):
     with patch("darwin.run") as mock:
         mock.return_value = fake_attestation
         yield mock
+
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
+
+def _strip_ansi(s):
+    return _ANSI_RE.sub("", s)
 
 
 @pytest.fixture
@@ -121,16 +150,16 @@ class TestArgumentParsing:
         assert result.exit_code != 0
         # Typer/Click writes the "Missing argument" message to stdout
         # in their styled error panel; accept either stream.
-        combined = result.stdout + (result.stderr or "")
+        combined = _strip_ansi(result.stdout + (result.stderr or ""))
         assert "Missing argument" in combined or "WORKLOAD" in combined
 
     def test_run_help_exits_zero(self, runner: CliRunner):
         """`darwin run --help` always succeeds and prints usage."""
         result = runner.invoke(app, ["run", "--help"])
         assert result.exit_code == 0
-        assert "WORKLOAD" in result.stdout
-        assert "--substrate" in result.stdout
-        assert "--cost-cap" in result.stdout
+        assert "WORKLOAD" in _strip_ansi(result.stdout)
+        assert "--substrate" in _strip_ansi(result.stdout)
+        assert "--cost-cap" in _strip_ansi(result.stdout)
 
     def test_run_help_lists_all_documented_flags(self, runner: CliRunner):
         """All public flags appear in help output."""
@@ -144,7 +173,7 @@ class TestArgumentParsing:
             "--save",
             "--json",
         ]:
-            assert flag in result.stdout, f"flag {flag} missing from help"
+            assert flag in _strip_ansi(result.stdout), f"flag {flag} missing from help"
 
 
 # ---------------------------------------------------------------------------
