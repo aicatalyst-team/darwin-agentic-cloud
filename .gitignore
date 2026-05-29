@@ -100,3 +100,10 @@ logs/
 # DAC-specific
 attestations/
 .dac-state/
+
+# macOS Finder duplicate artifacts
+* 2.md
+* 2.sh
+* 2.lock
+*\ 2/
+README.v2.0.0.md.bak
