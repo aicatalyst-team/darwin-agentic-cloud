@@ -122,7 +122,9 @@ def render_welcome(
     parts.append(Text(""))
 
     parts.append(Text("  Verifiable and free compute for AI agents.", style=f"bold {BRAND_GREEN}"))
-    parts.append(Text("  Cryptographically signed execution attestations.", style=f"bold {BRAND_GREEN}"))
+    parts.append(
+        Text("  Cryptographically signed execution attestations.", style=f"bold {BRAND_GREEN}")
+    )
     parts.append(Text("  MCP-native.", style=f"bold {BRAND_GREEN}"))
     parts.append(Text(""))
 
@@ -135,7 +137,9 @@ def render_welcome(
     cmd1 = Text("    1.  ", style=f"bold {BRAND_GREEN}")
     cmd1.append("darwin list", style=f"bold {BRAND_GREEN}")
     parts.append(cmd1)
-    parts.append(Text("        See which compute substrates are available right now.", style=BRAND_GREEN))
+    parts.append(
+        Text("        See which compute substrates are available right now.", style=BRAND_GREEN)
+    )
     parts.append(Text(""))
 
     cmd2 = Text("    2.  ", style=f"bold {BRAND_GREEN}")
@@ -148,7 +152,9 @@ def render_welcome(
     cmd3 = Text("    3.  ", style=f"bold {BRAND_GREEN}")
     cmd3.append("darwin verify att.json", style=f"bold {BRAND_GREEN}")
     parts.append(cmd3)
-    parts.append(Text("        Cryptographically verify the attestation against", style=BRAND_GREEN))
+    parts.append(
+        Text("        Cryptographically verify the attestation against", style=BRAND_GREEN)
+    )
     parts.append(Text("        the public keylist.", style=BRAND_GREEN))
     parts.append(Text(""))
 

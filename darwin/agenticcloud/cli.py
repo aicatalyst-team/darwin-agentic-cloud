@@ -92,6 +92,8 @@ def welcome() -> None:
     from darwin.agenticcloud.ui import print_welcome
 
     print_welcome(Console(), version=_v)
+
+
 keys_app = typer.Typer(help="Manage signing keys.", no_args_is_help=True)
 attest_app = typer.Typer(help="Work with attestations.", no_args_is_help=True)
 history_app = typer.Typer(help="Query attestation history.", no_args_is_help=True)
