@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.3] — 2026-05-28
+
+### Added
+
+- CLI integration tests for `darwin run` (`tests/cli/test_run.py`). 15 new tests
+  covering argument parsing (no-args error, help output, documented flags),
+  workload resolution (file path vs inline code, nonexistent-file fallback),
+  flag handling (--substrate, --cost-cap, --timeout, --memory, --language),
+  output formats (--save writes valid JSON, --json emits parseable output), and
+  smoke regression for the file-exists-and-inline-code happy paths. Tests use
+  `typer.testing.CliRunner` with the underlying `darwin.run()` mocked so they
+  run without Docker or AWS credentials.
+- New `tests/cli/` directory + `__init__.py` for future per-verb CLI test files.
+
+### Internal
+
+- Test suite total: 388 → 403 passing.
+
 ## [3.0.2] — 2026-05-28
 
 ### Added

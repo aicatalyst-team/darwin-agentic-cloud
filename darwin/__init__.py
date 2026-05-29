@@ -5,7 +5,7 @@ A family of modules:
     (more to come)
 """
 
-__version__ = "3.0.2"
+__version__ = "3.0.3"
 __author__ = "Vladimir J Edouard"
 __license__ = "Apache-2.0"
 

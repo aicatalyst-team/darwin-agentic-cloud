@@ -1,0 +1,51 @@
+{
+  "attestation_id": "att_1a83a636569e4e93",
+  "schema": "darwin.cloud/agenticcloud/attestation/v0.2",
+  "issued_at": "2026-05-29T01:10:03Z",
+  "workload_spec_hash": "4fa10188f2faa0d07f25cb38df5492424b7f154d874e02463216ea827ae1748a",
+  "execution_result": {
+    "output_hash": "67ecdb031db5e6529d6edd8d25eb20dd443162fd8b3fdf4b121dbfc82e7906be",
+    "substrate": {
+      "id": "local-docker-v0",
+      "version": "0.1.0",
+      "identity_signature": "c/zmytDvWNdHsirKXs6LYyuT0CyEEhuStDb+CbzxVfsIzU/lgCVGphYNYzE/s0/GKxoRthL4PHfbnJGgoe2XAQ==",
+      "identity_signer_type": "darwin-class-key",
+      "identity_signer_key_id": "dac-class-local-docker-v0-ca698355dcb631e3",
+      "evidence_schema_id": "darwin.cloud/evidence/local-docker/v1",
+      "evidence": {
+        "container_status": "ok",
+        "exit_code": 0,
+        "stdout_hash": "67ecdb031db5e6529d6edd8d25eb20dd443162fd8b3fdf4b121dbfc82e7906be",
+        "stderr_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "wall_time_sec": 0.11720395088195801
+      },
+      "extensions": {},
+      "tee_required": false
+    },
+    "cost_usd": 1.172e-05,
+    "stdout": "hello from a real attestation\n",
+    "stderr": ""
+  },
+  "value_added_service": {
+    "identity_signing": {
+      "schema_compliant": true,
+      "keylist_url": "https://darwin-agentic-cloud.fly.dev/.well-known/substrate-keys.json"
+    },
+    "cost_cap_enforcement": {
+      "cap_usd": 0.1,
+      "estimated_usd_max": 0.003,
+      "actual_usd": 1.172e-05,
+      "within_cap": true,
+      "headroom_usd": 0.09998828
+    },
+    "routing_decision": {
+      "policy": "pick_by_cost",
+      "chosen_substrate_id": "local-docker-v0",
+      "chosen_reason": "lowest_estimated_cost ($0.003000)",
+      "candidates_considered": 1,
+      "rejected_substrates": []
+    }
+  },
+  "signer_key_id": "dac-local-d1bf7cad25875cee",
+  "signature": "cyIS5v4zUkyIAyfISoBAYBZifIRQdAYX2ZU1o8KOSf/NGg/hC80lRqblFNCXRouETqeXL8A35UqJVx+2C8w+Bg=="
+}
