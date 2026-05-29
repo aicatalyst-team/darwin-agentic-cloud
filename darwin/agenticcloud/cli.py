@@ -14,6 +14,8 @@ Examples:
 from __future__ import annotations
 
 import json
+import os
+import sys
 from datetime import UTC
 from pathlib import Path
 from typing import Annotated
@@ -35,6 +37,61 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
+
+
+# -------------------------------------------------------------------
+# First-run welcome
+# -------------------------------------------------------------------
+
+_WELCOME_MARKER = Path.home() / ".darwin" / "welcomed"
+
+
+def _show_welcome_if_first_run() -> None:
+    """Print the welcome banner exactly once per user install.
+
+    Suppressed in non-interactive shells, when piped, or when the user
+    sets DARWIN_SUPPRESS_WELCOME=1. The marker file at
+    ~/.darwin/welcomed records that the user has been welcomed.
+    """
+    try:
+        if not sys.stdout.isatty():
+            return
+        if os.environ.get("DARWIN_SUPPRESS_WELCOME"):
+            return
+        if _WELCOME_MARKER.exists():
+            return
+
+        from darwin import __version__ as _v
+        from darwin.agenticcloud.ui import print_welcome
+
+        print_welcome(Console(), version=_v)
+
+        _WELCOME_MARKER.parent.mkdir(parents=True, exist_ok=True)
+        _WELCOME_MARKER.touch()
+    except Exception:
+        # Welcome banner must never block real commands. If anything
+        # goes wrong here (terminal weirdness, IO error, etc.), swallow
+        # silently and proceed with the user's command.
+        pass
+
+
+@app.callback()
+def _root(ctx: typer.Context) -> None:
+    """Darwin Agentic Cloud — verifiable compute for AI agents."""
+    # The `welcome` command renders the banner itself; skip the
+    # auto-trigger here to avoid double-rendering.
+    if ctx.invoked_subcommand == "welcome":
+        return
+    _show_welcome_if_first_run()
+
+
+@app.command()
+def welcome() -> None:
+    """Show the Darwin welcome banner."""
+    from darwin import __version__ as _v
+    from darwin.agenticcloud.ui import print_welcome
+
+    print_welcome(Console(), version=_v)
 keys_app = typer.Typer(help="Manage signing keys.", no_args_is_help=True)
 attest_app = typer.Typer(help="Work with attestations.", no_args_is_help=True)
 history_app = typer.Typer(help="Query attestation history.", no_args_is_help=True)

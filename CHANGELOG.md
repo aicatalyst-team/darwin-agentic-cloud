@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.2] — 2026-05-28
+
+### Added
+
+- First-run welcome banner. When a user runs any `darwin` command for the first
+  time after install, an ASCII brand banner prints with the tagline, motto, three
+  starter commands, and links to demo, repo, and docs. Shown once per install
+  via a marker file at `~/.darwin/welcomed`. Suppressed in non-interactive shells
+  (pipes, scripts, CI) and when `DARWIN_SUPPRESS_WELCOME=1` is set.
+- `darwin welcome` command to re-trigger the banner on demand.
+
+### Internal
+
+- New `render_welcome()` and `print_welcome()` functions in
+  `darwin/agenticcloud/ui.py`, reusing the existing `BANNER`, `BRAND_GREEN`,
+  `BRAND_AMBER`, and `BRAND_DIM` brand tokens for visual continuity with the
+  attestation cert panel.
+
 ## [3.0.1] — 2026-05-27
 
 ### Fixed

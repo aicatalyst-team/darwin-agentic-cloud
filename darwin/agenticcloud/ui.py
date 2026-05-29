@@ -92,6 +92,97 @@ def print_banner(
 
 
 # -------------------------------------------------------------------
+# First-run welcome
+# -------------------------------------------------------------------
+
+
+def render_welcome(
+    version: str,
+    demo_url: str = "https://darwin-agentic-cloud.fly.dev/demo",
+    repo_url: str = "https://github.com/vje013/darwin-agentic-cloud",
+    docs_url: str = "https://darwin-agentic-cloud.fly.dev/docs",
+) -> Group:
+    """First-run welcome: ASCII banner + tagline + 3 commands + links.
+
+    Visually distinct from `render_banner()` (which prints version/signer
+    metadata for repeat users). Designed to orient a new user in their
+    first 30 seconds with the tool.
+    """
+    parts: list = []
+
+    parts.append(Text(BANNER, style=f"bold {BRAND_GREEN}"))
+    parts.append(Text(""))
+
+    motto = Text()
+    motto.append("  ")
+    motto.append("✦", style=f"bold {BRAND_AMBER}")
+    motto.append("  SECURITAS · STABILITAS · SIGNUM  ", style=BRAND_GREEN)
+    motto.append("✦", style=f"bold {BRAND_AMBER}")
+    parts.append(motto)
+    parts.append(Text(""))
+
+    parts.append(Text("  Verifiable and free compute for AI agents.", style=f"bold {BRAND_GREEN}"))
+    parts.append(Text("  Cryptographically signed execution attestations.", style=f"bold {BRAND_GREEN}"))
+    parts.append(Text("  MCP-native.", style=f"bold {BRAND_GREEN}"))
+    parts.append(Text(""))
+
+    parts.append(Text("  " + "─" * 59, style=BRAND_DIM))
+    parts.append(Text(""))
+
+    parts.append(Text("  Try it in 3 commands:", style=f"bold {BRAND_GREEN}"))
+    parts.append(Text(""))
+
+    cmd1 = Text("    1.  ", style=f"bold {BRAND_GREEN}")
+    cmd1.append("darwin list", style=f"bold {BRAND_GREEN}")
+    parts.append(cmd1)
+    parts.append(Text("        See which compute substrates are available right now.", style=BRAND_GREEN))
+    parts.append(Text(""))
+
+    cmd2 = Text("    2.  ", style=f"bold {BRAND_GREEN}")
+    cmd2.append("echo 'print(\"hello\")' > hello.py", style=BRAND_GREEN)
+    parts.append(cmd2)
+    parts.append(Text("        darwin run hello.py --save att.json", style=f"bold {BRAND_GREEN}"))
+    parts.append(Text("        Execute a workload, get a signed attestation.", style=BRAND_GREEN))
+    parts.append(Text(""))
+
+    cmd3 = Text("    3.  ", style=f"bold {BRAND_GREEN}")
+    cmd3.append("darwin verify att.json", style=f"bold {BRAND_GREEN}")
+    parts.append(cmd3)
+    parts.append(Text("        Cryptographically verify the attestation against", style=BRAND_GREEN))
+    parts.append(Text("        the public keylist.", style=BRAND_GREEN))
+    parts.append(Text(""))
+
+    parts.append(Text("  " + "─" * 59, style=BRAND_DIM))
+    parts.append(Text(""))
+
+    link_demo = Text("  Live demo:  ", style=BRAND_GREEN)
+    link_demo.append(demo_url, style=f"underline {BRAND_GREEN}")
+    parts.append(link_demo)
+
+    link_repo = Text("  GitHub:     ", style=BRAND_GREEN)
+    link_repo.append(repo_url, style=f"underline {BRAND_GREEN}")
+    parts.append(link_repo)
+
+    link_docs = Text("  Docs:       ", style=BRAND_GREEN)
+    link_docs.append(docs_url, style=f"underline {BRAND_GREEN}")
+    parts.append(link_docs)
+
+    parts.append(Text(""))
+
+    parts.append(Text("  This message shown once per install.", style=BRAND_DIM))
+    parts.append(Text("  Run `darwin welcome` to see it again.", style=BRAND_DIM))
+
+    return Group(*parts)
+
+
+def print_welcome(console: Console, version: str) -> None:
+    """Convenience: print the welcome with appropriate vertical spacing."""
+    console.print()
+    console.print(render_welcome(version=version))
+    console.print()
+
+
+# -------------------------------------------------------------------
 # Matrix boot sequence
 # -------------------------------------------------------------------
 
