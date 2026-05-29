@@ -27,6 +27,27 @@ Increase AI adoption by increasing AI safety.
 
 ---
 
+## Darwin's Promises (Beginning 6/1/2026)
+
+Darwin Agentic Cloud keeps businesses in control of their agent spend by providing deterministic execution + signed receipts over every automated purchase.
+
+Simply put, DAC dramatically increases the chances of your business’s agent giving you the purchase outcome you want.
+
+If you want your business’s agent booking travel, buying office supplies, we make sure it actually happens.
+
+
+- DAC is free. You never pay us. Ever.
+- All DAC needs is your Google account.
+- You never give DAC your card.
+- You stay in control. Your AI can never act or spend beyond what you authorized.
+- We guarantee deterministic execution surfaces for your AI's actions.
+- Your AI only acts where it can succeed.
+- We provide receipts for your AI's actions.
+- We earn from merchants, not from you.
+- If a site is not agent-ready, we do not send your agent there.
+
+---
+
 ## The question agents can't answer today
 
 Your agent just executed code on its own. You don't see what happened. You can't replay it. You can't prove it ran. You can't show a regulator, an auditor, or another agent that the workload actually executed on real hardware under your policy at the cost you agreed to.
@@ -592,7 +613,7 @@ total = att1['execution_result']['cost_usd'] + att2['execution_result']['cost_us
 print(f"Total cost: ${total:.4f}")
 ```
 
-### Batch processing with cost guard (we limit user usage to ~10 hours/day)
+### Batch processing with cost guard (we guarantee your agent NEVER crosses your budget threshold)
 
 ```python
 from darwin import run, CostCapExceeded
