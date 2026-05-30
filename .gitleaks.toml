@@ -1,0 +1,10 @@
+title = "darwin gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Captured AWS API response fixtures contain pagination tokens, not secrets"
+paths = [
+  '''tests/fixtures/.*''',
+]
