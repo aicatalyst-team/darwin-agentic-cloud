@@ -10,7 +10,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3/dist/bundle/asciinema-player.css">
 
 <style>
 :root {
@@ -503,7 +502,6 @@ footer .footer-motto {
     <span class="command">pip install darwin-agentic-cloud</span>
     <button class="copy-btn" onclick="copyCmd(this, 'pip install darwin-agentic-cloud')">copy</button>
   </div>
-  <div id="darwin-cast" style="max-width:820px;margin:40px auto 0;border:1px solid var(--surface-4);border-radius:8px;overflow:hidden;"></div>
 </section>
 
 <main>
@@ -665,11 +663,5 @@ function copyCmd(btn, txt) {
 }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3/dist/bundle/asciinema-player.min.js"></script>
-<script>
-  AsciinemaPlayer.create('/demo/darwin-run.cast', document.getElementById('darwin-cast'), {
-    autoPlay: true, loop: true, poster: 'npt:0:03', fit: 'width'
-  });
-</script>
 </body>
 </html>
