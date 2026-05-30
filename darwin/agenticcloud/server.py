@@ -485,6 +485,7 @@ def create_app(
     async def commerce_page() -> HTMLResponse:
         """Render the agent-first commerce landing page."""
         from pathlib import Path as _P
+
         tmpl_path = _P(__file__).parent / "templates" / "commerce.html"
         return HTMLResponse(tmpl_path.read_text(encoding="utf-8"))
 

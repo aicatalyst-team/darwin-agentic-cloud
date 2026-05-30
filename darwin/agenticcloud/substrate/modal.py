@@ -164,7 +164,7 @@ def _validate_evidence(evidence: Mapping[str, Any]) -> None:
     if not isinstance(exit_code, int):
         raise EvidenceSchemaError(f"exit_code must be int, got {type(exit_code).__name__}")
     wall_time = evidence.get("wall_time_sec")
-    if not isinstance(wall_time, (int, float)):
+    if not isinstance(wall_time, int | float):
         raise EvidenceSchemaError(f"wall_time_sec must be a number, got {type(wall_time).__name__}")
     stdout_hash = evidence.get("stdout_hash", "")
     if not isinstance(stdout_hash, str) or not stdout_hash.startswith("sha256:"):

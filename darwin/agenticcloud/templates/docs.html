@@ -348,16 +348,23 @@ body {
 </head>
 <body>
 
-<header class="topbar">
-  <div class="topbar-left">
-    <div class="brand"><span class="accent">darwin.</span>agenticcloud</div>
-    <span class="brand-tag" id="version-tag">…</span>
-  </div>
-  <div class="topbar-actions">
-    <a class="topbar-link" href="/openapi.json">OpenAPI</a>
-    <a class="topbar-link" href="/docs/swagger">Swagger</a>
-    <a class="topbar-link" href="https://github.com/vje013/darwin-agentic-cloud">GitHub →</a>
-  </div>
+<style>
+.dac-nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:#000;border-bottom:1px solid #2a2a2a;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;}
+.dac-nav-brand{font-weight:700;font-size:18px;letter-spacing:-0.02em;color:#fff;text-decoration:none;white-space:nowrap;}
+.dac-nav-brand span{color:#00FF66;}
+.dac-nav-links{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.dac-nav-links a{color:#a0a0a0;text-decoration:none;font-size:14px;font-weight:500;padding:8px 14px;border-radius:8px;transition:color .15s,background .15s;}
+.dac-nav-links a:hover{color:#00FF66;background:#141414;}
+@media(max-width:640px){.dac-nav{padding:12px 16px;}.dac-nav-links a{padding:6px 10px;font-size:13px;}}
+</style>
+<header class="dac-nav">
+  <a class="dac-nav-brand" href="/docs"><span>darwin.</span>agenticcloud</a>
+  <nav class="dac-nav-links">
+    <a href="/docs">Docs</a>
+    <a href="/demo">Demo</a>
+    <a href="/commerce">Commerce</a>
+    <a href="https://github.com/vje013/darwin-agentic-cloud">GitHub &rarr;</a>
+  </nav>
 </header>
 
 <section class="hero">
