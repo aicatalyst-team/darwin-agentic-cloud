@@ -635,7 +635,7 @@ def price(
             "green" if q["status"] == "ok" else "yellow" if q["status"] == "rejected" else "red"
         )
         table.add_row(
-            q["substrate_id"],
+            str(q["substrate_id"]),
             cost_str,
             f"[{status_color}]{q['status']}[/{status_color}]",
         )
@@ -728,9 +728,9 @@ def sign(
     Upload the PEM contents as a secret to your hosted signer, then
     publish the public key in the substrate keylist.
     """
-    from darwin.agenticcloud.admin_cli import _cmd_generate
+    from darwin.agenticcloud.admin_cli import class_keys_generate
 
-    _cmd_generate(substrate_id=substrate_id, out_path=out)
+    class_keys_generate(substrate_id=substrate_id, out_dir=out or Path("./class-keys"))
 
 
 @app.command(name="try")

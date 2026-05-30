@@ -179,8 +179,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     if handler is None:
         return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
     if asyncio.iscoroutinefunction(handler):
-        return await handler(arguments)
-    return handler(arguments)
+        return await handler(arguments)  # type: ignore[no-any-return]
+    return handler(arguments)  # type: ignore[return-value]
 
 
 async def _handle_run(arguments: dict[str, Any]) -> list[TextContent]:
@@ -372,7 +372,7 @@ def _handle_history(arguments: dict[str, Any]) -> list[TextContent]:
 
 
 def _handle_stats(arguments: dict[str, Any]) -> list[TextContent]:
-    stats = _store.stats()
+    stats = {"count": _store.count(), "total_cost_usd": _store.total_cost_usd()}
     return [TextContent(type="text", text=json.dumps(stats, indent=2))]
 
 

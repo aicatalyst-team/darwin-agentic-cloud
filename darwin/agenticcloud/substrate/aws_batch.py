@@ -476,8 +476,8 @@ class BatchSubstrate(Substrate):
             return CostEstimate(
                 cost_usd_max=float("inf"),
                 cost_breakdown={
-                    "pricing_source": "unavailable",
-                    "note": (
+                    "pricing_source": "unavailable",  # type: ignore[dict-item]
+                    "note": (  # type: ignore[dict-item]
                         "Pricing API unreachable; substrate will record "
                         "pricing_source=unavailable on attestation."
                     ),
@@ -510,10 +510,10 @@ class BatchSubstrate(Substrate):
                 "spot_price_per_hour_usd": float(spot_quote.price_per_hour_usd),
                 "ondemand_price_per_hour_usd": float(ondemand_quote.price_per_hour_usd),
                 "savings_pct": float(pricing.savings_pct or Decimal("0")),
-                "pricing_source": pricing.source,
-                "instance_type": self._instance_type,
-                "availability_zone": spot_quote.availability_zone,
-                "pricing_quoted_at": spot_quote.quoted_at_iso,
+                "pricing_source": pricing.source,  # type: ignore[dict-item]
+                "instance_type": self._instance_type,  # type: ignore[dict-item]
+                "availability_zone": spot_quote.availability_zone,  # type: ignore[dict-item]
+                "pricing_quoted_at": spot_quote.quoted_at_iso,  # type: ignore[dict-item]
             },
             notes=f"Batch preflight for {self.substrate_id}",
         )
@@ -746,7 +746,7 @@ class BatchSubstrate(Substrate):
                         f"job {job_id} FAILED with no log stream: "
                         f"reason={job.get('statusReason')!r}"
                     )
-                return job
+                return job  # type: ignore[no-any-return]
 
             await asyncio.sleep(interval)
             elapsed += interval

@@ -200,7 +200,7 @@ class AttestationStore:
     def count(self) -> int:
         """Total number of stored attestations."""
         with self._connect() as conn:
-            return conn.execute("SELECT COUNT(*) FROM attestations").fetchone()[0]
+            return int(conn.execute("SELECT COUNT(*) FROM attestations").fetchone()[0])
 
     def total_cost_usd(self, signer_key_id: str | None = None) -> float:
         """Sum of cost_usd across all (or one signer's) attestations."""

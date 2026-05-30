@@ -427,12 +427,12 @@ def _real_modal_sandbox_factory(
         stdout = (
             stdout_raw
             if isinstance(stdout_raw, str)
-            else stdout_raw.decode("utf-8", errors="replace")
+            else stdout_raw.decode("utf-8", errors="replace")  # type: ignore[attr-defined]
         )
         stderr = (
             stderr_raw
             if isinstance(stderr_raw, str)
-            else stderr_raw.decode("utf-8", errors="replace")
+            else stderr_raw.decode("utf-8", errors="replace")  # type: ignore[attr-defined]
         )
 
         if exit_code == 0:

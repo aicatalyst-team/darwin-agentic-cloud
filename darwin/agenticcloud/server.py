@@ -82,7 +82,7 @@ class IdentityResponse(BaseModel):
     key_id: str
     public_key_b64: str
     substrate_id: str
-    schema: str
+    schema: str  # type: ignore[assignment]
     version: str
 
 
@@ -408,7 +408,7 @@ def create_app(
         from pathlib import Path as _Path
 
         schema_path = _Path(__file__).parent / "schemas" / "attestation_v0_2.json"
-        return _json.loads(schema_path.read_text(encoding="utf-8"))
+        return _json.loads(schema_path.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
 
     @app.get(
         "/demo",
@@ -479,7 +479,7 @@ def create_app(
         from pathlib import Path as _P
 
         att_path = _P(__file__).parent / "templates" / "demo_attestation.json"
-        return _json.loads(att_path.read_text(encoding="utf-8"))
+        return _json.loads(att_path.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
 
     @app.get("/commerce", response_class=HTMLResponse, include_in_schema=False)
     async def commerce_page() -> HTMLResponse:
@@ -488,14 +488,6 @@ def create_app(
 
         tmpl_path = _P(__file__).parent / "templates" / "commerce.html"
         return HTMLResponse(tmpl_path.read_text(encoding="utf-8"))
-
-    @app.get("/demo/darwin-run.cast", include_in_schema=False)
-    async def darwin_run_cast() -> "FileResponse":
-        """Serve the recorded darwin run terminal cast (asciicast v2)."""
-        from pathlib import Path as _P
-        from fastapi.responses import FileResponse
-        cast = _P(__file__).parent / "templates" / "darwin-run.cast"
-        return FileResponse(cast, media_type="application/x-asciicast")
 
     # Custom branded docs page (Material 3, dark, brand colors)
     from pathlib import Path as _Path
