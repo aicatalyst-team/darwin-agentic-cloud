@@ -16,7 +16,7 @@
 >
 > Just sign in with Gmail. Your card stays in your Google account.
 >
-> Open source. Free to users. Contributors welcome.
+> Open source. Free to users. All agent and human contributors welcome.
 >
 > Built on: webMCP + AP2
 >
