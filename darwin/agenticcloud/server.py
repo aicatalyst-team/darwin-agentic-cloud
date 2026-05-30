@@ -481,6 +481,13 @@ def create_app(
         att_path = _P(__file__).parent / "templates" / "demo_attestation.json"
         return _json.loads(att_path.read_text(encoding="utf-8"))
 
+    @app.get("/commerce", response_class=HTMLResponse, include_in_schema=False)
+    async def commerce_page() -> HTMLResponse:
+        """Render the agent-first commerce landing page."""
+        from pathlib import Path as _P
+        tmpl_path = _P(__file__).parent / "templates" / "commerce.html"
+        return HTMLResponse(tmpl_path.read_text(encoding="utf-8"))
+
     # Custom branded docs page (Material 3, dark, brand colors)
     from pathlib import Path as _Path
 
