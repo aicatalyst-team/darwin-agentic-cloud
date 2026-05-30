@@ -489,6 +489,14 @@ def create_app(
         tmpl_path = _P(__file__).parent / "templates" / "commerce.html"
         return HTMLResponse(tmpl_path.read_text(encoding="utf-8"))
 
+    @app.get("/demo/darwin-run.cast", include_in_schema=False)
+    async def darwin_run_cast() -> "FileResponse":
+        """Serve the recorded darwin run terminal cast (asciicast v2)."""
+        from pathlib import Path as _P
+        from fastapi.responses import FileResponse
+        cast = _P(__file__).parent / "templates" / "darwin-run.cast"
+        return FileResponse(cast, media_type="application/x-asciicast")
+
     # Custom branded docs page (Material 3, dark, brand colors)
     from pathlib import Path as _Path
 
