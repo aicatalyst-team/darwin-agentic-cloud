@@ -20,7 +20,7 @@
 >
 > Built on: webMCP + AP2
 >
-> Sandboxed Beta + Research launching 6/1/2026
+> Sandboxed Beta + Research: 6/1/2026
 
 **Install:** `pip install darwin-agentic-cloud`
 
