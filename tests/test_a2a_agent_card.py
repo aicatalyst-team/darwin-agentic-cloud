@@ -23,6 +23,7 @@ from darwin.agenticcloud.a2a.skills import (
 # Agent Card Schema Validation
 # -------------------------------------------------------------------
 
+
 class TestAgentCardSchema:
     """Validate Agent Card matches A2A v0.3.0+ schema."""
 
@@ -92,6 +93,7 @@ class TestAgentCardSchema:
 # Skills Validation
 # -------------------------------------------------------------------
 
+
 class TestSkillDefinitions:
     """Validate skill definitions match A2A spec requirements."""
 
@@ -131,7 +133,10 @@ class TestSkillDefinitions:
     def test_run_skill_definition(self) -> None:
         """darwin.run skill has correct metadata."""
         assert SKILL_RUN.id == "darwin.run"
-        assert "execute" in SKILL_RUN.description.lower() or "workload" in SKILL_RUN.description.lower()
+        assert (
+            "execute" in SKILL_RUN.description.lower()
+            or "workload" in SKILL_RUN.description.lower()
+        )
 
     def test_verify_skill_definition(self) -> None:
         """darwin.verify skill has correct metadata."""
@@ -147,6 +152,7 @@ class TestSkillDefinitions:
 # -------------------------------------------------------------------
 # JSON Schema Compliance (hand-built from A2A spec)
 # -------------------------------------------------------------------
+
 
 class TestAgentCardJsonSchema:
     """Validate the serialized card against A2A v0.3.0+ JSON structure."""
