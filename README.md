@@ -74,7 +74,7 @@ DAC answers two of the six by construction. The companion preprint, [Bounded Exe
 | Systemic (multi-agent) | Pre-launch cap bounds this agent's own participation; population dynamics out of scope | cost-cap fields | Partial |
 | Human-in-the-loop (overseer) | Offline-verifiable attestation available to the overseer; judgment manipulation out of scope | `signer_key_id`, `signature`, public keylist | Partial |
 
-Perception traps are removed, since a tool surface offers no carrier. Action traps are bounded, since the mandate caps the action and a refusal is signed. Reasoning and memory traps act on the model's cognition and are deferred, not solved; per-agent determinism measurement is the path from contained to detected.
+> Perception traps are removed, since a tool surface offers no carrier. Action traps are bounded, since the mandate caps the action and a refusal is signed. Reasoning and memory traps act on the model's cognition and are deferred, not solved; per-agent determinism measurement is the path from contained to detected.
 ---
 
 ## The question agents can't answer today
