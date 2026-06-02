@@ -1,5 +1,7 @@
 # Darwin Agentic Cloud
 
+**Paper:** [Bounded Execution and the Containment of Agent Traps](docs/bounded-execution.pdf) (preprint, SSRN under review)
+
 [![PyPI](https://img.shields.io/pypi/v/darwin-agentic-cloud.svg)](https://pypi.org/project/darwin-agentic-cloud/)
 [![CI](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml/badge.svg)](https://github.com/vje013/darwin-agentic-cloud/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -56,6 +58,23 @@ If you want your business’s agent booking your travel, buying your office supp
 - We earn from merchants, not from you.
 - If a site is not agent-ready, we do not send your agent there.
 
+---
+## Threat Model
+
+The open agentic web has a documented attack surface. A recent Google DeepMind paper, [AI Agent Traps](https://ssrn.com/abstract=6372438), maps six classes of trap that compromise an agent through its environment, not its weights, so hardening the model closes none of them.
+
+DAC answers two of the six by construction. The companion preprint, [Bounded Execution and the Containment of Agent Traps](docs/bounded-execution.pdf) (SSRN, under review), states the claim and its limits in full. Coverage across all six classes:
+
+| Trap class (target) | DAC mechanism | Evidencing field | Status |
+|---|---|---|---|
+| Content injection (perception) | No-fallback tool surface; the agent calls declared tools (WebMCP), leaving no rendered-content carrier | `evidence.surface_url`, `evidence.tool_name` | Removed |
+| Behavioural control (action) | Signed AP2 mandate (spend limit + approved counterparty set), credential isolation, pre-launch cost cap, signed refusal on a gated action | `vas.mandate_enforcement.within_scope`, `refusal{reason_code, gate, requested, allowed}`, cost-cap fields | Bounded |
+| Semantic manipulation (reasoning) | — | — | Deferred |
+| Cognitive state (memory, learning) | — | — | Deferred |
+| Systemic (multi-agent) | Pre-launch cap bounds this agent's own participation; population dynamics out of scope | cost-cap fields | Partial |
+| Human-in-the-loop (overseer) | Offline-verifiable attestation available to the overseer; judgment manipulation out of scope | `signer_key_id`, `signature`, public keylist | Partial |
+
+Perception traps are removed, since a tool surface offers no carrier. Action traps are bounded, since the mandate caps the action and a refusal is signed. Reasoning and memory traps act on the model's cognition and are deferred, not solved; per-agent determinism measurement is the path from contained to detected.
 ---
 
 ## The question agents can't answer today
