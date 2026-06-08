@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: darwin-agentic-cloud
+  namespace: poc-darwin-agentic-cloud
+  labels:
+    app: darwin-agentic-cloud
+    autopoc.io/project: darwin-agentic-cloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: darwin-agentic-cloud
+  template:
+    metadata:
+      labels:
+        app: darwin-agentic-cloud
+    spec:
+      containers:
+        - name: darwin-agentic-cloud
+          image: quay.io/aicatalyst/darwin-agentic-cloud:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8787
+          env:
+            - name: DARWIN_STATE_DIR
+              value: "/opt/app-root/data"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8787
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8787
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          volumeMounts:
+            - name: darwin-data
+              mountPath: /opt/app-root/data
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: darwin-data
+          persistentVolumeClaim:
+            claimName: darwin-data

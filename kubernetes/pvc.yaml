@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: darwin-data
+  namespace: poc-darwin-agentic-cloud
+  labels:
+    app: darwin-agentic-cloud
+    autopoc.io/project: darwin-agentic-cloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: poc-darwin-agentic-cloud
+  labels:
+    app.kubernetes.io/name: darwin-agentic-cloud
+    app.kubernetes.io/managed-by: autopoc
