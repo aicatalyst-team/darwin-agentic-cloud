@@ -6,7 +6,8 @@ WORKDIR /opt/app-root/src
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    DARWIN_STATE_DIR=/opt/app-root/data
+    DARWIN_STATE_DIR=/opt/app-root/data \
+    DARWIN_CLASS_KEYS_DIR=/opt/app-root/data/class-keys
 
 # Copy dependency files first for layer caching
 COPY pyproject.toml README.md LICENSE ./
@@ -19,7 +20,7 @@ COPY docker-entrypoint.sh ./docker-entrypoint.sh
 USER 0
 RUN pip install --no-cache-dir . && \
     chmod +x /opt/app-root/src/docker-entrypoint.sh && \
-    mkdir -p /opt/app-root/data && \
+    mkdir -p /opt/app-root/data/class-keys && \
     chgrp -R 0 /opt/app-root && chmod -R g=u /opt/app-root
 
 USER 1001
