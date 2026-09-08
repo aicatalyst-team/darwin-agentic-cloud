@@ -1,4 +1,10 @@
-# Darwin Agentic Cloud
+> [!WARNING]
+> **This repository is archived.**
+>
+> Archived on 2026-09-08 by the AI Catalyst Platform Team.
+> It is read-only and no longer maintained.
+
+---# Darwin Agentic Cloud
 
 **Paper:** [Bounded Execution and the Containment of Agent Traps](docs/bounded-execution.pdf) (preprint, SSRN under review)
 
